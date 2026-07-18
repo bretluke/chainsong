@@ -23,6 +23,9 @@
     -webkit-font-smoothing:antialiased;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   }
+  /* When the sticky player is visible, reserve room so content isn't hidden. */
+  body.has-player .wrap{padding-bottom:180px}
+
   .wrap{max-width:540px;margin:0 auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:12px}
 
   header{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -116,6 +119,61 @@
   .savebtn:disabled{opacity:.6;cursor:wait}
 
   footer{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#4a4366;letter-spacing:1px}
+
+  /* --- Sticky player bar --- */
+  .player{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:540px;
+    background:linear-gradient(180deg, rgba(23,19,39,.97) 0%, rgba(12,10,20,1) 100%);
+    border-top:1px solid var(--line);
+    padding:10px 14px calc(12px + env(safe-area-inset-bottom));
+    display:none;flex-direction:column;gap:8px;
+    z-index:100;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    box-shadow:0 -10px 30px rgba(0,0,0,.35);
+  }
+  .player.show{display:flex}
+  .pl-top{display:flex;align-items:center;gap:10px}
+  .pl-art{width:42px;height:42px;border-radius:6px;object-fit:cover;flex:0 0 auto;background:#0e0b1a}
+  .pl-meta{flex:1;min-width:0}
+  .pl-title{font-size:13px;font-weight:700;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl-artist{font-size:11px;color:var(--dim);margin-top:1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl-close{background:transparent;border:none;color:var(--dim);font-size:22px;line-height:1;
+    cursor:pointer;padding:0 6px}
+  .pl-close:hover{color:var(--ink)}
+
+  .pl-controls{display:flex;align-items:center;justify-content:center;gap:14px}
+  .pl-controls button{background:transparent;border:none;color:var(--ink);font-size:15px;
+    cursor:pointer;padding:6px 8px;border-radius:6px;transition:.15s}
+  .pl-controls button:hover:not(:disabled){background:rgba(255,255,255,.06)}
+  .pl-controls button:disabled{opacity:.28;cursor:not-allowed}
+  .pl-controls .pl-play{background:var(--ink);color:var(--bg);
+    width:38px;height:38px;border-radius:50%;padding:0;font-size:14px;
+    display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+  .pl-controls .pl-play:hover:not(:disabled){background:var(--lime)}
+
+  .pl-seekrow{display:flex;align-items:center;gap:8px;
+    font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim)}
+  .pl-time,.pl-total{min-width:34px}
+  .pl-total{text-align:right}
+  input[type=range].pl-seek,input[type=range].pl-vol{
+    flex:1;height:4px;-webkit-appearance:none;appearance:none;
+    background:var(--line);border-radius:2px;outline:none;padding:0;border:none}
+  input[type=range].pl-seek::-webkit-slider-thumb,
+  input[type=range].pl-vol::-webkit-slider-thumb{
+    -webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+    background:var(--ink);cursor:pointer;border:none}
+  input[type=range].pl-seek::-moz-range-thumb,
+  input[type=range].pl-vol::-moz-range-thumb{
+    width:12px;height:12px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
+  input[type=range].pl-vol{max-width:90px;height:3px}
+  input[type=range].pl-vol::-webkit-slider-thumb{width:10px;height:10px;background:var(--dim)}
+
+  .pl-volrow{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:-2px}
+  .pl-volicon{font-size:11px;color:var(--dim)}
 </style>
 </head>
 <body>
@@ -166,15 +224,37 @@
 
   <button class="savebtn" id="save">Save chain as Spotify playlist</button>
 
-  <footer>PASS &amp; PLAY · v0.4</footer>
+  <footer>PASS &amp; PLAY · v0.5</footer>
+</div>
+
+<!-- Sticky player bar (Premium + SDK ready only) -->
+<div class="player" id="player">
+  <div class="pl-top">
+    <img class="pl-art" id="pl-art" alt="">
+    <div class="pl-meta">
+      <div class="pl-title" id="pl-title">—</div>
+      <div class="pl-artist" id="pl-artist"></div>
+    </div>
+    <button class="pl-close" id="pl-close" title="Close">×</button>
+  </div>
+  <div class="pl-controls">
+    <button class="pl-prev" id="pl-prev" title="Previous song in chain">⏮</button>
+    <button class="pl-play" id="pl-play" title="Play/Pause">▶</button>
+    <button class="pl-next" id="pl-next" title="Next song in chain">⏭</button>
+  </div>
+  <div class="pl-seekrow">
+    <span class="pl-time" id="pl-time">0:00</span>
+    <input type="range" class="pl-seek" id="pl-seek" min="0" max="1000" value="0">
+    <span class="pl-total" id="pl-total">0:00</span>
+  </div>
+  <div class="pl-volrow">
+    <span class="pl-volicon">🔊</span>
+    <input type="range" class="pl-vol" id="pl-vol" min="0" max="100" value="60">
+  </div>
 </div>
 
 <audio id="audio" preload="auto"></audio>
 
-<!-- Spotify Web Playback SDK — full-track playback for Premium users on desktop.
-     Mobile Safari doesn't support the underlying browser APIs so it will
-     silently fail there; the preview and Open-in-Spotify buttons stay as
-     the mobile-friendly fallback. -->
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
 
 <script>
@@ -207,8 +287,16 @@ let spotifyUser=null;
 let sdkPlayer=null;
 let sdkDeviceId=null;
 let sdkReady=false;
-let sdkPlaying=false;    // is a full track currently playing?
-let sdkCurrentUri=null;  // which track URI is loaded in the SDK
+let sdkPlaying=false;
+let sdkCurrentUri=null;
+
+// Player bar state — reported position is extrapolated for smooth seek bar
+let playerVisible=false;
+let posReported=0;
+let posReportedAt=0;
+let posDuration=0;
+let posTicker=null;
+let userDraggingSeek=false;
 
 const $=id=>document.getElementById(id);
 const titleEl=$("title"),artistEl=$("artist"),descEl=$("desc");
@@ -233,9 +321,10 @@ function renderSpotifyBar(){
     btn.textContent='Sign out'; btn.classList.remove('primary');
     btn.onclick=async()=>{
       await fetch('/api/spotify-logout',{method:'POST'});
-      // Disconnect the SDK too so it doesn't keep an authenticated session.
       if(sdkPlayer){ try{ sdkPlayer.disconnect(); }catch(e){} sdkPlayer=null; sdkReady=false; sdkDeviceId=null; }
-      spotifyUser={loggedIn:false}; renderSpotifyBar(); updateSaveButton(); renderChain();
+      playerVisible=false; sdkPlaying=false; sdkCurrentUri=null;
+      spotifyUser={loggedIn:false};
+      renderSpotifyBar(); updateSaveButton(); renderChain(); renderPlayer();
     };
   }else{
     bar.classList.remove('on');
@@ -248,16 +337,13 @@ function renderSpotifyBar(){
 
 // --- Web Playback SDK init ---
 function initWebPlaybackSDK(){
-  // Only Premium users can use the SDK — free accounts get account_error.
   if(!spotifyUser?.loggedIn || spotifyUser.product!=='premium') return;
-  if(sdkPlayer) return; // already initialized
+  if(sdkPlayer) return;
 
   const buildPlayer=()=>{
     sdkPlayer=new Spotify.Player({
       name:'Chainsong',
       volume:0.6,
-      // Called by the SDK whenever it needs a fresh token — we re-hit
-      // /api/spotify-me which handles refresh server-side.
       getOAuthToken:async(cb)=>{
         try{
           const r=await fetch('/api/spotify-me');
@@ -266,40 +352,35 @@ function initWebPlaybackSDK(){
         }catch(e){ console.error('SDK token fetch failed',e); }
       },
     });
-
     sdkPlayer.addListener('ready',({device_id})=>{
       sdkDeviceId=device_id; sdkReady=true; renderChain();
     });
     sdkPlayer.addListener('not_ready',()=>{ sdkReady=false; renderChain(); });
     sdkPlayer.addListener('player_state_changed',(state)=>{
-      if(!state){ sdkPlaying=false; renderChain(); return; }
+      if(!state){ sdkPlaying=false; renderChain(); renderPlayer(); return; }
       sdkPlaying=!state.paused;
       const uri=state.track_window?.current_track?.uri;
       if(uri) sdkCurrentUri=uri;
-      renderChain();
+      posReported=state.position;
+      posReportedAt=Date.now();
+      posDuration=state.duration||0;
+      renderChain(); renderPlayer();
     });
     sdkPlayer.addListener('initialization_error',e=>console.error('sdk init:',e));
     sdkPlayer.addListener('authentication_error',e=>console.error('sdk auth:',e));
     sdkPlayer.addListener('account_error',e=>{ console.error('sdk needs Premium:',e); sdkReady=false; renderChain(); });
-
     sdkPlayer.connect();
   };
-
-  // The SDK sets a global callback when its script has parsed. If it's
-  // already loaded (loadSpotifyUser is async so this is likely), build now.
   if(window.Spotify){ buildPlayer(); }
   else { window.onSpotifyWebPlaybackSDKReady=buildPlayer; }
 }
 
 async function playFullTrack(uri){
   if(!sdkReady || !sdkDeviceId) return;
-  // Pause the 30s preview so two audio sources don't overlap.
   audio.pause();
   try{
-    // If this URI is already loaded, toggle play/pause instead of restarting.
     if(sdkCurrentUri===uri && sdkPlaying){ await sdkPlayer.pause(); return; }
     if(sdkCurrentUri===uri && !sdkPlaying){ await sdkPlayer.resume(); return; }
-
     const me=await(await fetch('/api/spotify-me')).json();
     if(!me.loggedIn) return;
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${sdkDeviceId}`,{
@@ -308,8 +389,110 @@ async function playFullTrack(uri){
       body:JSON.stringify({ uris:[uri] }),
     });
     sdkCurrentUri=uri;
+    playerVisible=true;
+    renderPlayer();
   }catch(e){ console.error('play failed',e); }
 }
+
+// --- Player bar ---
+function playerChainIndex(){
+  if(!sdkCurrentUri) return -1;
+  return chain.findIndex(c=>c.spotify?.uri===sdkCurrentUri);
+}
+function currentPosition(){
+  if(!sdkPlaying) return posReported;
+  return Math.min(posReported + (Date.now()-posReportedAt), posDuration||0);
+}
+function fmtTime(ms){
+  if(!ms||ms<0) ms=0;
+  const s=Math.floor(ms/1000);
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+function updatePosDisplay(){
+  const pos=currentPosition();
+  $("pl-time").textContent=fmtTime(pos);
+  if(!userDraggingSeek){
+    const pct=posDuration?(pos/posDuration)*1000:0;
+    $("pl-seek").value=pct;
+  }
+}
+function ensureTicker(){
+  if(posTicker) return;
+  posTicker=setInterval(()=>{
+    if(playerVisible && sdkPlaying) updatePosDisplay();
+  },250);
+}
+function renderPlayer(){
+  const bar=$("player");
+  if(!playerVisible || !sdkReady){
+    bar.classList.remove('show');
+    document.body.classList.remove('has-player');
+    return;
+  }
+  bar.classList.add('show');
+  document.body.classList.add('has-player');
+
+  const idx=playerChainIndex();
+  const track=idx>=0?chain[idx]:null;
+  $("pl-title").textContent=track?.title||'Playing…';
+  $("pl-artist").textContent=track?.artist||'';
+  const art=track?.spotify?.albumArt;
+  if(art){ $("pl-art").src=art; $("pl-art").style.visibility='visible'; }
+  else { $("pl-art").style.visibility='hidden'; }
+  $("pl-play").textContent=sdkPlaying?'⏸':'▶';
+  $("pl-prev").disabled=idx<=0;
+  $("pl-next").disabled=idx<0||idx>=chain.length-1;
+  $("pl-total").textContent=fmtTime(posDuration);
+  updatePosDisplay();
+  ensureTicker();
+}
+
+// Wire up player bar controls
+$("pl-play").onclick=async()=>{
+  if(!sdkPlayer) return;
+  try{ sdkPlaying ? await sdkPlayer.pause() : await sdkPlayer.resume(); }
+  catch(e){ console.error(e); }
+};
+$("pl-prev").onclick=()=>{
+  const idx=playerChainIndex();
+  if(idx>0) playFullTrack(chain[idx-1].spotify.uri);
+};
+$("pl-next").onclick=()=>{
+  const idx=playerChainIndex();
+  if(idx>=0 && idx<chain.length-1) playFullTrack(chain[idx+1].spotify.uri);
+};
+$("pl-close").onclick=async()=>{
+  if(sdkPlayer){ try{ await sdkPlayer.pause(); }catch(e){} }
+  playerVisible=false;
+  renderPlayer(); renderChain();
+};
+const seek=$("pl-seek");
+seek.addEventListener('mousedown',()=>userDraggingSeek=true);
+seek.addEventListener('touchstart',()=>userDraggingSeek=true,{passive:true});
+seek.addEventListener('input',()=>{
+  if(!posDuration) return;
+  // update time display while dragging so user sees where they'll land
+  const ms=(parseFloat(seek.value)/1000)*posDuration;
+  $("pl-time").textContent=fmtTime(ms);
+});
+async function commitSeek(){
+  userDraggingSeek=false;
+  if(!sdkPlayer || !posDuration) return;
+  const ms=Math.floor((parseFloat(seek.value)/1000)*posDuration);
+  try{
+    await sdkPlayer.seek(ms);
+    posReported=ms; posReportedAt=Date.now();
+  }catch(e){ console.error('seek failed',e); }
+}
+seek.addEventListener('mouseup',commitSeek);
+seek.addEventListener('touchend',commitSeek);
+seek.addEventListener('change',commitSeek);
+
+$("pl-vol").addEventListener('input',()=>{
+  if(!sdkPlayer) return;
+  const v=parseFloat($("pl-vol").value)/100;
+  try{ sdkPlayer.setVolume(v); }catch(e){}
+});
 
 // --- render chain views ---
 function renderChain(){
@@ -368,7 +551,6 @@ function togglePreview(url,btn){
     btn.textContent='▶ Preview';
     return;
   }
-  // Pause SDK if it's playing so audio doesn't double up.
   if(sdkPlaying && sdkPlayer){ try{ sdkPlayer.pause(); }catch(e){} }
   audio.src=url;
   audio.play().then(()=>{
@@ -383,12 +565,11 @@ audio.addEventListener('ended',()=>{
 function autoPlayLatest(){
   const last=chain[chain.length-1];
   if(!last?.spotify?.previewUrl) return;
-  // Don't stomp on an in-progress full-track playback.
   if(sdkPlaying) return;
   audio.src=last.spotify.previewUrl;
   audio.play().then(()=>{
     const pb=$("playbtn"); if(pb){ pb.classList.add('playing'); pb.textContent='⏸ Playing'; }
-  }).catch(()=>{ /* autoplay blocked; the play button still works */ });
+  }).catch(()=>{});
 }
 
 // --- word picker ---
@@ -458,7 +639,7 @@ async function submit(allowOverride){
   });
   forbiddenStem=data.linkStem;
   selected=null;titleEl.value='';artistEl.value='';descEl.value='';
-  renderChain();refreshWords();updateSaveButton();
+  renderChain();refreshWords();updateSaveButton();renderPlayer();
   autoPlayLatest();
   showMsg(data.override?'Accepted by table call.':'Linked! Pass the phone.','ok');
   setTimeout(clearMsg,1800);
