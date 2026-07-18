@@ -46,7 +46,7 @@ module.exports = function handler(req, res) {
     scope: SCOPES,
     redirect_uri: redirectUri,
     state,
-    show_dialog: 'false',
+    show_dialog: 'true',
   });
   res.writeHead(302, { Location: `https://accounts.spotify.com/authorize?${params}` });
   res.end();
