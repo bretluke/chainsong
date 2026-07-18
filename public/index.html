@@ -5,188 +5,330 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chainsong</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Spline+Sans+Mono:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800;12..96,900&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
 
   :root{
-    --bg:#0c0a14; --panel:#171327; --ink:#f4f0ff; --dim:#8a82a8;
-    --hot:#ff5d73; --lime:#c2f970; --violet:#9b6dff; --line:#2a2440;
-    --spot:#1db954;
+    --bg:#0b0917; --bg-2:#0e0b1c;
+    --panel:#141026; --panel-2:#1a1530;
+    --ink:#f4f0ff; --dim:#8a82a8; --dimmer:#5a5378;
+    --hot:#ff5d73; --lime:#c2f970; --violet:#9b6dff; --spot:#1db954;
+    --line:#26203f; --line-2:#332a52;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{
     background:
-      radial-gradient(900px 500px at 80% -10%, rgba(155,109,255,.22), transparent 60%),
-      radial-gradient(700px 500px at -10% 110%, rgba(255,93,115,.15), transparent 55%),
+      radial-gradient(1100px 600px at 85% -10%, rgba(155,109,255,.20), transparent 60%),
+      radial-gradient(800px 500px at -10% 110%, rgba(255,93,115,.13), transparent 55%),
       var(--bg);
     color:var(--ink); font-family:'Bricolage Grotesque',system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   }
-  /* When the sticky player is visible, reserve room so content isn't hidden. */
-  body.has-player .wrap{padding-bottom:180px}
+  body.has-player .wrap{padding-bottom:200px}
 
-  .wrap{max-width:540px;margin:0 auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:12px}
+  .wrap{max-width:640px;margin:0 auto;padding:18px 18px 24px;display:flex;flex-direction:column;gap:14px}
 
-  header{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  h1{font-size:24px;font-weight:800;letter-spacing:-.5px}
-  h1 .x{color:var(--hot)}
-  .tag{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
+  /* --- header --- */
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{width:38px;height:22px;flex:0 0 auto}
+  .brand .name{font-size:22px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;font-style:italic}
+  .brand .name .x{color:var(--hot)}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-family:'Spline Sans Mono',monospace;
+    font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
+  .tag svg{width:14px;height:14px}
 
-  .spotbar{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
-    border-radius:11px;padding:8px 12px;font-size:12px}
-  .spotbar .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
-  .spotbar.on .dot{background:var(--spot)}
-  .spotbar .who{flex:1;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .spotbar.on .who{color:var(--ink)}
-  .spotbar button{background:transparent;border:1px solid var(--line);color:var(--ink);
-    padding:6px 11px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer}
-  .spotbar button.primary{background:var(--spot);border-color:var(--spot);color:#000;font-weight:600}
+  /* --- spotify bar --- */
+  .spotbar{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;font-size:13px}
+  .spotbar .dot{width:9px;height:9px;border-radius:50%;background:var(--dimmer);flex:0 0 auto}
+  .spotbar.on .dot{background:var(--spot);box-shadow:0 0 10px rgba(29,185,84,.6)}
+  .spotbar .who{flex:1;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+  .spotbar.on .who{color:var(--ink);font-size:16px}
+  .spotbar .badge{background:rgba(155,109,255,.18);color:var(--violet);
+    font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:1.2px;
+    padding:4px 9px;border-radius:6px;font-weight:600}
+  .spotbar button{background:transparent;border:1px solid var(--line-2);color:var(--ink);
+    padding:8px 14px;border-radius:10px;font-family:inherit;font-size:12px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;font-weight:500}
+  .spotbar button svg{width:14px;height:14px}
+  .spotbar button.primary{background:var(--spot);border-color:var(--spot);color:#000;font-weight:700}
 
-  .history{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  /* --- history strip --- */
+  .history{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;align-items:center;scrollbar-width:none}
   .history::-webkit-scrollbar{display:none}
-  .hcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:8px 11px;min-width:140px;max-width:200px;display:flex;gap:8px;align-items:center}
-  .hcard img{width:32px;height:32px;border-radius:5px;object-fit:cover;flex:0 0 auto}
+  .hcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:10px 12px;min-width:160px;max-width:220px;display:flex;gap:10px;align-items:center;
+    transition:.15s}
+  .hcard.current{border-color:var(--violet);background:rgba(155,109,255,.06)}
+  .hcard img{width:38px;height:38px;border-radius:6px;object-fit:cover;flex:0 0 auto;background:#0e0b1a}
   .hcard .hbody{min-width:0;flex:1}
-  .hcard .hseq{font-family:'Spline Sans Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1px}
-  .hcard .htitle{font-size:12px;font-weight:600;line-height:1.25;margin-top:1px;
+  .hcard .hseq{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
+  .hcard .hseq b{color:var(--violet);font-weight:600}
+  .hcard .htitle{font-size:13px;font-weight:700;line-height:1.2;margin-top:2px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .hcard .hartist{font-size:10px;color:var(--dim);
+  .hcard .hartist{font-size:11px;color:var(--dim);margin-top:1px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hlink{flex:0 0 auto;color:var(--dim);display:flex;align-items:center}
+  .hlink svg{width:22px;height:22px}
 
-  .prev{background:linear-gradient(140deg, rgba(155,109,255,.16), rgba(255,93,115,.10));
-    border:1px solid rgba(155,109,255,.35);border-radius:18px;padding:16px 18px;position:relative;
-    display:flex;gap:14px;align-items:center}
-  .prev.empty{background:var(--panel);border-color:var(--line);text-align:center;padding:22px 18px;display:block}
-  .prev img{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:0 0 auto;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  /* --- previous song hero card --- */
+  .prev{background:linear-gradient(140deg, rgba(155,109,255,.18) 0%, rgba(155,109,255,.06) 40%, rgba(255,93,115,.08) 100%);
+    border:1px solid rgba(155,109,255,.35);border-radius:20px;padding:20px 22px;
+    display:flex;gap:18px;align-items:center}
+  .prev.empty{background:var(--panel);border-color:var(--line);text-align:center;padding:26px 18px;display:block}
+  .prev img{width:112px;height:112px;border-radius:10px;object-fit:cover;flex:0 0 auto;box-shadow:0 6px 20px rgba(0,0,0,.45)}
   .prev .pbody{flex:1;min-width:0}
-  .prev .plabel{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--violet);
-    text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
-  .prev .ptitle{font-size:20px;font-weight:800;line-height:1.15;letter-spacing:-.3px;
+  .prev .plabel{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--violet);
+    text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;font-weight:500}
+  .prev .ptitle{font-size:34px;font-weight:800;line-height:1.05;letter-spacing:-.7px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .prev .partist{font-size:13px;color:var(--dim);margin-top:3px;
+  .prev .partist{font-size:16px;color:var(--dim);margin-top:4px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .prev .pforbid{margin-top:8px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#ff97a6}
-  .prev .pforbid b{background:rgba(255,93,115,.15);padding:2px 7px;border-radius:5px}
-  .prev.empty .ptitle{font-size:16px;font-weight:600;color:var(--dim);letter-spacing:0}
-  .prev .pctrl{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-  .prev .pctrl button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
-    color:var(--ink);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:11px;cursor:pointer;
-    display:inline-flex;align-items:center;gap:5px}
-  .prev .pctrl button.play{background:var(--lime);border-color:var(--lime);color:#101010;font-weight:700}
-  .prev .pctrl button.play.playing{background:transparent;border-color:var(--lime);color:var(--lime)}
-  .prev .pctrl button.full{background:var(--spot);border-color:var(--spot);color:#000;font-weight:700}
-  .prev .pctrl button.full.playing{background:transparent;border-color:var(--spot);color:var(--spot)}
-  .prev .pctrl a{background:var(--spot);border:1px solid var(--spot);color:#000;font-weight:600;
-    border-radius:8px;padding:6px 10px;font-family:inherit;font-size:11px;text-decoration:none;
-    display:inline-flex;align-items:center;gap:5px}
+  .prev .pforbid{margin-top:12px;display:inline-flex;align-items:center;gap:8px;
+    font-family:'Spline Sans Mono',monospace;font-size:11px;color:#ff97a6;text-transform:uppercase;letter-spacing:1.5px}
+  .prev .pforbid b{background:rgba(255,93,115,.20);padding:3px 9px;border-radius:6px;
+    font-family:'Bricolage Grotesque',sans-serif;text-transform:none;font-size:12px;color:#ff97a6;font-weight:600;letter-spacing:0}
+  .prev.empty .ptitle{font-size:17px;font-weight:600;color:var(--dim);letter-spacing:0}
+
+  .prev .pctrl{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .prev .pctrl button, .prev .pctrl a{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:10px 16px;border-radius:10px;
+    font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    text-decoration:none;border:1px solid var(--line-2);
+    background:rgba(255,255,255,.04);color:var(--ink);transition:.15s}
+  .prev .pctrl button svg, .prev .pctrl a svg{width:14px;height:14px}
+  .prev .pctrl button.play{background:transparent;border-color:var(--lime);color:var(--lime)}
+  .prev .pctrl button.play:hover{background:rgba(194,249,112,.08)}
+  .prev .pctrl button.play.playing{background:rgba(194,249,112,.12)}
+  .prev .pctrl button.full{background:transparent;border-color:var(--lime);color:var(--lime)}
+  .prev .pctrl button.full.playing{background:rgba(194,249,112,.12)}
+  .prev .pctrl a.spot{background:var(--spot);border-color:var(--spot);color:#000;font-weight:700}
   .prev .noprev{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim);margin-top:8px}
 
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
-  label{display:block;font-family:'Spline Sans Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:0 0 6px 2px}
-  input{width:100%;background:#0e0b1a;border:1px solid var(--line);color:var(--ink);
-    font-family:'Bricolage Grotesque',sans-serif;font-size:16px;padding:12px 14px;border-radius:11px;outline:none}
-  input:focus{border-color:var(--violet)}
-  input::placeholder{color:#4a4366}
-  .row{margin-bottom:11px}
-  .hint{font-size:11px;color:var(--dim);margin:5px 2px 0;line-height:1.45}
+  /* --- input panel --- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 22px}
+  .field{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+  .field:last-of-type{border-bottom:none}
+  .field .ficon{width:22px;color:var(--dim);flex:0 0 auto;margin-top:24px}
+  .field .ficon svg{width:22px;height:22px}
+  .field .fbody{flex:1;min-width:0}
+  .flabel{font-family:'Spline Sans Mono',monospace;font-size:10px;text-transform:uppercase;
+    letter-spacing:1.5px;color:var(--dim);margin-bottom:8px;font-weight:500}
+  input.txt{width:100%;background:transparent;border:none;color:var(--ink);
+    font-family:inherit;font-size:16px;padding:2px 0;outline:none}
+  input.txt::placeholder{color:var(--dimmer)}
+  .hint{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.4}
 
-  .words{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
-  .w{font-family:'Spline Sans Mono',monospace;font-size:13px;padding:8px 12px;border-radius:9px;
-    background:#0e0b1a;border:1px solid var(--line);color:var(--ink);cursor:pointer;transition:.15s}
+  .words{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+  .w{font-family:'Spline Sans Mono',monospace;font-size:13px;padding:9px 13px;border-radius:9px;
+    background:rgba(255,255,255,.03);border:1px solid var(--line-2);color:var(--ink);cursor:pointer;transition:.15s}
   .w:hover{border-color:var(--violet)}
-  .w.sel{background:var(--lime);color:#101010;border-color:var(--lime);font-weight:600}
-  .w.dead{opacity:.32;cursor:not-allowed;text-decoration:line-through}
-  .w.dead:hover{border-color:var(--line)}
+  .w.sel{background:var(--lime);color:#101010;border-color:var(--lime);font-weight:700}
+  .w.dead{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+  .w.dead:hover{border-color:var(--line-2)}
 
-  button.go{width:100%;margin-top:14px;background:var(--hot);color:#fff;border:none;
-    font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:14px;border-radius:12px;cursor:pointer;letter-spacing:.3px}
-  button.go:disabled{background:#2a2440;color:#5a5278;cursor:not-allowed}
-  button.go:not(:disabled):active{transform:scale(.985)}
+  button.go{width:100%;margin-top:16px;background:transparent;color:var(--ink);
+    border:1px solid var(--line-2);
+    font-family:inherit;font-weight:600;font-size:16px;padding:16px;border-radius:12px;cursor:pointer;
+    display:flex;align-items:center;justify-content:space-between;transition:.15s}
+  button.go:not(:disabled){background:var(--hot);border-color:var(--hot);color:#fff;font-weight:700}
+  button.go:not(:disabled) svg{opacity:.9}
+  button.go:disabled{color:var(--dimmer);cursor:not-allowed}
+  button.go svg{width:18px;height:18px}
+  button.go:not(:disabled):active{transform:scale(.99)}
 
-  .msg{margin-top:11px;font-size:13px;padding:10px 13px;border-radius:10px;display:none;line-height:1.4}
+  .msg{margin-top:12px;font-size:13px;padding:11px 14px;border-radius:10px;display:none;line-height:1.4}
   .msg.err{display:block;background:rgba(255,93,115,.12);color:#ff97a6;border:1px solid rgba(255,93,115,.3)}
   .msg.ok{display:block;background:rgba(194,249,112,.1);color:var(--lime);border:1px solid rgba(194,249,112,.3)}
   .ovrbar{margin-top:11px;display:none;gap:8px}
   .ovrbar.show{display:flex}
-  .ovrbar button{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e0b1a;color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer}
+  .ovrbar button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line-2);
+    background:transparent;color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer}
   .ovrbar button.yes{border-color:var(--lime);color:var(--lime)}
 
-  .savebtn{width:100%;background:var(--spot);color:#000;border:none;font-family:inherit;font-weight:700;
-    font-size:14px;padding:13px;border-radius:12px;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px}
+  .savebtn{width:100%;background:var(--lime);color:#101010;border:none;font-family:inherit;font-weight:700;
+    font-size:15px;padding:16px;border-radius:14px;cursor:pointer;display:none;
+    align-items:center;justify-content:center;gap:10px}
   .savebtn.show{display:flex}
+  .savebtn svg{width:18px;height:18px}
   .savebtn:disabled{opacity:.6;cursor:wait}
 
-  footer{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#4a4366;letter-spacing:1px}
+  footer{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--dimmer);letter-spacing:1.5px}
 
-  /* --- Sticky player bar --- */
+  /* --- sticky player bar --- */
   .player{
     position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-    width:100%;max-width:540px;
-    background:linear-gradient(180deg, rgba(23,19,39,.97) 0%, rgba(12,10,20,1) 100%);
+    width:100%;max-width:640px;
+    background:linear-gradient(180deg, rgba(20,16,38,.98) 0%, rgba(11,9,23,1) 100%);
     border-top:1px solid var(--line);
-    padding:10px 14px calc(12px + env(safe-area-inset-bottom));
-    display:none;flex-direction:column;gap:8px;
+    padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+    display:none;flex-direction:column;gap:10px;
     z-index:100;
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-    box-shadow:0 -10px 30px rgba(0,0,0,.35);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 -12px 40px rgba(0,0,0,.4);
   }
   .player.show{display:flex}
-  .pl-top{display:flex;align-items:center;gap:10px}
-  .pl-art{width:42px;height:42px;border-radius:6px;object-fit:cover;flex:0 0 auto;background:#0e0b1a}
+
+  .pl-top{display:flex;align-items:center;gap:14px}
+  .pl-art{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:0 0 auto;background:#0e0b1a;
+    box-shadow:0 4px 14px rgba(0,0,0,.4)}
   .pl-meta{flex:1;min-width:0}
-  .pl-title{font-size:13px;font-weight:700;line-height:1.2;
+  .pl-title{font-size:15px;font-weight:700;line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pl-artist{font-size:11px;color:var(--dim);margin-top:1px;
+  .pl-artist{font-size:12px;color:var(--dim);margin-top:2px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pl-close{background:transparent;border:none;color:var(--dim);font-size:22px;line-height:1;
-    cursor:pointer;padding:0 6px}
-  .pl-close:hover{color:var(--ink)}
+  .pl-nowplaying{display:inline-flex;align-items:center;gap:5px;margin-top:5px;
+    font-family:'Spline Sans Mono',monospace;font-size:9px;color:var(--lime);
+    background:rgba(194,249,112,.12);padding:3px 7px;border-radius:5px;
+    text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+  .pl-nowplaying svg{width:10px;height:10px}
+  .pl-collapse{background:transparent;border:none;color:var(--dim);cursor:pointer;padding:6px}
+  .pl-collapse svg{width:18px;height:18px}
+  .pl-collapse:hover{color:var(--ink)}
 
-  .pl-controls{display:flex;align-items:center;justify-content:center;gap:14px}
-  .pl-controls button{background:transparent;border:none;color:var(--ink);font-size:15px;
-    cursor:pointer;padding:6px 8px;border-radius:6px;transition:.15s}
-  .pl-controls button:hover:not(:disabled){background:rgba(255,255,255,.06)}
-  .pl-controls button:disabled{opacity:.28;cursor:not-allowed}
+  .pl-controls{display:flex;align-items:center;justify-content:center;gap:16px}
+  .pl-controls button{background:transparent;border:none;color:var(--dim);
+    cursor:pointer;padding:6px;border-radius:8px;transition:.15s;
+    display:inline-flex;align-items:center;justify-content:center}
+  .pl-controls button svg{width:20px;height:20px}
+  .pl-controls button:hover:not(:disabled){color:var(--ink)}
+  .pl-controls button:disabled{opacity:.25;cursor:not-allowed}
+  .pl-controls button.toggle.on{color:var(--lime)}
   .pl-controls .pl-play{background:var(--ink);color:var(--bg);
-    width:38px;height:38px;border-radius:50%;padding:0;font-size:14px;
-    display:inline-flex;align-items:center;justify-content:center;font-weight:700}
-  .pl-controls .pl-play:hover:not(:disabled){background:var(--lime)}
+    width:44px;height:44px;border-radius:50%;padding:0}
+  .pl-controls .pl-play svg{width:18px;height:18px}
+  .pl-controls .pl-play:hover:not(:disabled){background:var(--lime);color:var(--bg)}
 
-  .pl-seekrow{display:flex;align-items:center;gap:8px;
-    font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim)}
-  .pl-time,.pl-total{min-width:34px}
+  .pl-seekrow{display:flex;align-items:center;gap:10px;
+    font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--dim)}
+  .pl-time,.pl-total{min-width:36px}
   .pl-total{text-align:right}
-  input[type=range].pl-seek,input[type=range].pl-vol{
-    flex:1;height:4px;-webkit-appearance:none;appearance:none;
-    background:var(--line);border-radius:2px;outline:none;padding:0;border:none}
-  input[type=range].pl-seek::-webkit-slider-thumb,
-  input[type=range].pl-vol::-webkit-slider-thumb{
-    -webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  input[type=range].pl-seek{
+    flex:1;height:5px;-webkit-appearance:none;appearance:none;
+    background:linear-gradient(to right, var(--lime) 0%, var(--lime) var(--pct,0%), var(--line) var(--pct,0%), var(--line) 100%);
+    border-radius:3px;outline:none;padding:0;border:none;cursor:pointer}
+  input[type=range].pl-seek::-webkit-slider-thumb{
+    -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
     background:var(--ink);cursor:pointer;border:none}
-  input[type=range].pl-seek::-moz-range-thumb,
-  input[type=range].pl-vol::-moz-range-thumb{
-    width:12px;height:12px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
-  input[type=range].pl-vol{max-width:90px;height:3px}
-  input[type=range].pl-vol::-webkit-slider-thumb{width:10px;height:10px;background:var(--dim)}
+  input[type=range].pl-seek::-moz-range-thumb{
+    width:13px;height:13px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
 
-  .pl-volrow{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:-2px}
-  .pl-volicon{font-size:11px;color:var(--dim)}
+  .pl-volrow{display:flex;align-items:center;gap:8px;margin-left:auto;max-width:180px}
+  .pl-volicon{color:var(--dim);display:inline-flex}
+  .pl-volicon svg{width:16px;height:16px}
+  input[type=range].pl-vol{
+    flex:1;height:4px;-webkit-appearance:none;appearance:none;
+    background:linear-gradient(to right, var(--lime) 0%, var(--lime) var(--vpct,60%), var(--line) var(--vpct,60%), var(--line) 100%);
+    border-radius:2px;outline:none;padding:0;border:none;cursor:pointer}
+  input[type=range].pl-vol::-webkit-slider-thumb{
+    -webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
+  input[type=range].pl-vol::-moz-range-thumb{
+    width:11px;height:11px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
+
+  .pl-bottomrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .pl-bottomrow .pl-seekrow{flex:1;min-width:200px}
+
+  /* mobile tightening */
+  @media (max-width:520px){
+    .wrap{padding:14px 14px 20px}
+    .prev{padding:16px 16px;gap:14px}
+    .prev img{width:88px;height:88px}
+    .prev .ptitle{font-size:26px}
+    .prev .partist{font-size:14px}
+    .panel{padding:14px 16px}
+    .brand svg{width:32px;height:20px}
+    .brand .name{font-size:19px}
+    .pl-art{width:52px;height:52px}
+    .pl-bottomrow{flex-direction:column;align-items:stretch;gap:8px}
+    .pl-volrow{max-width:none;margin-left:0}
+  }
 </style>
 </head>
 <body>
+
+<!-- SVG icon symbols reused throughout -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="brandg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c2f970"/>
+      <stop offset="55%" stop-color="#9b6dff"/>
+      <stop offset="100%" stop-color="#ff5d73"/>
+    </linearGradient>
+    <symbol id="i-chain" viewBox="0 0 24 24">
+      <path d="M10 14l-2 2a4 4 0 01-6-6l3-3a4 4 0 016 0M14 10l2-2a4 4 0 016 6l-3 3a4 4 0 01-6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </symbol>
+    <symbol id="i-brand" viewBox="0 0 42 24">
+      <path d="M12 12a6 6 0 100 .1M30 12a6 6 0 100 .1M14 12h14" stroke="url(#brandg)" stroke-width="3" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="i-user" viewBox="0 0 24 24">
+      <path d="M16 8a4 4 0 11-8 0 4 4 0 018 0zM4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="i-music" viewBox="0 0 24 24">
+      <path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <circle cx="18" cy="16" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+    </symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24">
+      <path d="M15 5l4 4L8 20H4v-4L15 5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </symbol>
+    <symbol id="i-link" viewBox="0 0 24 24">
+      <path d="M10 14a4 4 0 010-6l3-3a4 4 0 016 6l-2 2M14 10a4 4 0 010 6l-3 3a4 4 0 01-6-6l2-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4v16l14-8z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z" fill="currentColor"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M7 5h2v14H7zM20 5v14l-11-7z" fill="currentColor"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M15 5h2v14h-2zM4 5v14l11-7z" fill="currentColor"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24">
+      <path d="M16 3l5 4-5 4M16 21l5-4-5-4M3 7h4l10 10h4M17 7h4M3 17h4l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24">
+      <path d="M17 2l4 4-4 4M7 22l-4-4 4-4M3 6h14a4 4 0 014 4v4M21 18H7a4 4 0 01-4-4v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </symbol>
+    <symbol id="i-vol" viewBox="0 0 24 24">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" fill="currentColor"/>
+      <path d="M15 9a4 4 0 010 6M18 6a8 8 0 010 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="i-chevup" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="i-chevdown" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+    <symbol id="i-signout" viewBox="0 0 24 24">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </symbol>
+    <symbol id="i-spot" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="currentColor"/>
+      <path d="M7.5 15.5c2-1 5-1.5 8 0M6.5 12c2.5-1 6-1.5 10 0M6 9c3-1 7.5-1.5 12 0" stroke="#000" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24">
+      <path d="M4 6h16M4 12h10M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="i-eq" viewBox="0 0 24 24">
+      <rect x="4" y="10" width="3" height="10" rx="1" fill="currentColor"/>
+      <rect x="10.5" y="6" width="3" height="14" rx="1" fill="currentColor"/>
+      <rect x="17" y="12" width="3" height="8" rx="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24">
+      <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </symbol>
+  </defs>
+</svg>
+
 <div class="wrap">
   <header>
-    <h1>Chain<span class="x">song</span></h1>
-    <span class="tag" id="turn">Opening move</span>
+    <div class="brand">
+      <svg><use href="#i-brand"/></svg>
+      <span class="name">Chain<span class="x">song</span></span>
+    </div>
+    <span class="tag" id="turn"><svg><use href="#i-user"/></svg><span id="turnText">Opening move</span></span>
   </header>
 
   <div class="spotbar" id="spotbar">
     <span class="dot"></span>
     <span class="who" id="spotwho">Not connected to Spotify</span>
-    <button id="spotbtn" class="primary">Connect Spotify</button>
+    <span class="badge" id="spotbadge" style="display:none">PREMIUM</span>
+    <button id="spotbtn" class="primary"><svg><use href="#i-spot"/></svg><span>Connect Spotify</span></button>
   </div>
 
   <div class="history" id="history"></div>
@@ -196,25 +338,40 @@
   </div>
 
   <div class="panel">
-    <div class="row">
-      <label>Your song — title</label>
-      <input id="title" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. I Will Always Love You">
+    <div class="field">
+      <div class="ficon"><svg><use href="#i-music"/></svg></div>
+      <div class="fbody">
+        <div class="flabel">Your song — title</div>
+        <input class="txt" id="title" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. I Will Always Love You">
+      </div>
     </div>
-    <div class="row">
-      <label>Artist</label>
-      <input id="artist" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. Whitney Houston">
+    <div class="field">
+      <div class="ficon"><svg><use href="#i-user"/></svg></div>
+      <div class="fbody">
+        <div class="flabel">Artist</div>
+        <input class="txt" id="artist" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. Whitney Houston">
+      </div>
     </div>
-    <div class="row">
-      <label>Describe it (a lyric, the year, the vibe — optional)</label>
-      <input id="desc" autocomplete="off" placeholder="helps the table trust you weren't googling">
+    <div class="field">
+      <div class="ficon"><svg><use href="#i-pencil"/></svg></div>
+      <div class="fbody">
+        <div class="flabel">Describe it (a lyric, the year, the vibe — optional)</div>
+        <input class="txt" id="desc" autocomplete="off" placeholder="helps the table trust you weren't googling">
+      </div>
+    </div>
+    <div class="field" id="linkField" style="display:none">
+      <div class="ficon"><svg><use href="#i-link"/></svg></div>
+      <div class="fbody">
+        <div class="flabel">Which word links to the previous song?</div>
+        <div class="hint">Type your title &amp; artist above, then pick the linking word.</div>
+        <div class="words" id="words"></div>
+      </div>
     </div>
 
-    <div id="linkBlock" style="display:none">
-      <label>Which word links to the previous song?</label>
-      <div class="words" id="words"></div>
-    </div>
-
-    <button class="go" id="go" disabled>Name this song</button>
+    <button class="go" id="go" disabled>
+      <span id="goText">Name this song</span>
+      <svg><use href="#i-arrow"/></svg>
+    </button>
     <div class="msg" id="msg"></div>
     <div class="ovrbar" id="ovrbar">
       <button id="ovrNo">It was wrong</button>
@@ -222,43 +379,50 @@
     </div>
   </div>
 
-  <button class="savebtn" id="save">Save chain as Spotify playlist</button>
+  <button class="savebtn" id="save">
+    <svg><use href="#i-menu"/></svg>
+    <span>Save chain as Spotify playlist</span>
+  </button>
 
-  <footer>PASS &amp; PLAY · v0.5</footer>
+  <footer>PASS &amp; PLAY · v0.6</footer>
 </div>
 
-<!-- Sticky player bar (Premium + SDK ready only) -->
+<!-- Sticky player bar -->
 <div class="player" id="player">
   <div class="pl-top">
     <img class="pl-art" id="pl-art" alt="">
     <div class="pl-meta">
       <div class="pl-title" id="pl-title">—</div>
       <div class="pl-artist" id="pl-artist"></div>
+      <span class="pl-nowplaying"><svg><use href="#i-eq"/></svg>Playing full</span>
     </div>
-    <button class="pl-close" id="pl-close" title="Close">×</button>
+    <button class="pl-collapse" id="pl-collapse" title="Collapse"><svg><use href="#i-chevup"/></svg></button>
   </div>
   <div class="pl-controls">
-    <button class="pl-prev" id="pl-prev" title="Previous song in chain">⏮</button>
-    <button class="pl-play" id="pl-play" title="Play/Pause">▶</button>
-    <button class="pl-next" id="pl-next" title="Next song in chain">⏭</button>
+    <button class="toggle" id="pl-shuffle" title="Shuffle"><svg><use href="#i-shuffle"/></svg></button>
+    <button id="pl-prev" title="Previous song in chain"><svg><use href="#i-prev"/></svg></button>
+    <button class="pl-play" id="pl-play" title="Play/Pause"><svg id="pl-playicon"><use href="#i-play"/></svg></button>
+    <button id="pl-next" title="Next song in chain"><svg><use href="#i-next"/></svg></button>
+    <button class="toggle" id="pl-repeat" title="Repeat chain"><svg><use href="#i-repeat"/></svg></button>
   </div>
-  <div class="pl-seekrow">
-    <span class="pl-time" id="pl-time">0:00</span>
-    <input type="range" class="pl-seek" id="pl-seek" min="0" max="1000" value="0">
-    <span class="pl-total" id="pl-total">0:00</span>
-  </div>
-  <div class="pl-volrow">
-    <span class="pl-volicon">🔊</span>
-    <input type="range" class="pl-vol" id="pl-vol" min="0" max="100" value="60">
+  <div class="pl-bottomrow">
+    <div class="pl-seekrow">
+      <span class="pl-time" id="pl-time">0:00</span>
+      <input type="range" class="pl-seek" id="pl-seek" min="0" max="1000" value="0">
+      <span class="pl-total" id="pl-total">0:00</span>
+    </div>
+    <div class="pl-volrow">
+      <span class="pl-volicon"><svg><use href="#i-vol"/></svg></span>
+      <input type="range" class="pl-vol" id="pl-vol" min="0" max="100" value="60">
+    </div>
   </div>
 </div>
 
 <audio id="audio" preload="auto"></audio>
-
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
 
 <script>
-// --- word logic mirrored from server ---
+// ---- word logic mirrored from server ----
 const STOP=new Set(["a","an","the","i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
 function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
 const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
@@ -277,33 +441,27 @@ function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
  return w;}
 function linkable(title,artist){const seen=new Set(),out=[];for(const s of[title,artist])for(const tk of rawTokens(s)){if(STOP.has(tk)||tk.length<2)continue;const st=stem(tk);if(STOP.has(st)||seen.has(st))continue;seen.add(st);out.push({display:tk,stem:st});}return out;}
 
-// --- state ---
+// ---- state ----
 const chain=[];
 let forbiddenStem=null;
 let selected=null;
 let spotifyUser=null;
 
-// Web Playback SDK state
-let sdkPlayer=null;
-let sdkDeviceId=null;
-let sdkReady=false;
-let sdkPlaying=false;
-let sdkCurrentUri=null;
+let sdkPlayer=null, sdkDeviceId=null, sdkReady=false, sdkPlaying=false, sdkCurrentUri=null;
 
-// Player bar state — reported position is extrapolated for smooth seek bar
-let playerVisible=false;
-let posReported=0;
-let posReportedAt=0;
-let posDuration=0;
-let posTicker=null;
-let userDraggingSeek=false;
+// player bar
+let playerVisible=false, playerCollapsed=false;
+let posReported=0, posReportedAt=0, posDuration=0;
+let posTicker=null, userDraggingSeek=false;
+let shuffleOn=false, repeatOn=false;
+let advancing=false; // guard against double-fires on track-end
 
 const $=id=>document.getElementById(id);
 const titleEl=$("title"),artistEl=$("artist"),descEl=$("desc");
 const audio=$("audio");
 const esc=s=>String(s).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]));
 
-// --- Spotify session ---
+// ---- Spotify session ----
 async function loadSpotifyUser(){
   try{
     const r=await fetch('/api/spotify-me');
@@ -313,12 +471,13 @@ async function loadSpotifyUser(){
   initWebPlaybackSDK();
 }
 function renderSpotifyBar(){
-  const bar=$("spotbar"),who=$("spotwho"),btn=$("spotbtn");
+  const bar=$("spotbar"),who=$("spotwho"),badge=$("spotbadge"),btn=$("spotbtn");
   if(spotifyUser?.loggedIn){
     bar.classList.add('on');
-    const badge=spotifyUser.product==='premium'?' · Premium':'';
-    who.textContent=`${spotifyUser.displayName}${badge}`;
-    btn.textContent='Sign out'; btn.classList.remove('primary');
+    who.textContent=spotifyUser.displayName;
+    badge.style.display=spotifyUser.product==='premium'?'inline-block':'none';
+    btn.innerHTML='<span>Sign out</span><svg><use href="#i-signout"/></svg>';
+    btn.classList.remove('primary');
     btn.onclick=async()=>{
       await fetch('/api/spotify-logout',{method:'POST'});
       if(sdkPlayer){ try{ sdkPlayer.disconnect(); }catch(e){} sdkPlayer=null; sdkReady=false; sdkDeviceId=null; }
@@ -329,41 +488,42 @@ function renderSpotifyBar(){
   }else{
     bar.classList.remove('on');
     who.textContent='Not connected to Spotify';
-    btn.textContent='Connect Spotify'; btn.classList.add('primary');
+    badge.style.display='none';
+    btn.innerHTML='<svg><use href="#i-spot"/></svg><span>Connect Spotify</span>';
+    btn.classList.add('primary');
     btn.onclick=()=>{ location.href='/api/spotify-login'; };
   }
   updateSaveButton();
 }
 
-// --- Web Playback SDK init ---
+// ---- Web Playback SDK ----
 function initWebPlaybackSDK(){
   if(!spotifyUser?.loggedIn || spotifyUser.product!=='premium') return;
   if(sdkPlayer) return;
-
   const buildPlayer=()=>{
     sdkPlayer=new Spotify.Player({
-      name:'Chainsong',
-      volume:0.6,
+      name:'Chainsong', volume:0.6,
       getOAuthToken:async(cb)=>{
-        try{
-          const r=await fetch('/api/spotify-me');
-          const d=await r.json();
-          if(d.loggedIn) cb(d.accessToken);
-        }catch(e){ console.error('SDK token fetch failed',e); }
+        try{ const r=await fetch('/api/spotify-me'); const d=await r.json(); if(d.loggedIn) cb(d.accessToken); }
+        catch(e){ console.error('SDK token fetch failed',e); }
       },
     });
-    sdkPlayer.addListener('ready',({device_id})=>{
-      sdkDeviceId=device_id; sdkReady=true; renderChain();
-    });
+    sdkPlayer.addListener('ready',({device_id})=>{ sdkDeviceId=device_id; sdkReady=true; renderChain(); });
     sdkPlayer.addListener('not_ready',()=>{ sdkReady=false; renderChain(); });
     sdkPlayer.addListener('player_state_changed',(state)=>{
       if(!state){ sdkPlaying=false; renderChain(); renderPlayer(); return; }
+      const wasPlaying=sdkPlaying;
       sdkPlaying=!state.paused;
       const uri=state.track_window?.current_track?.uri;
       if(uri) sdkCurrentUri=uri;
       posReported=state.position;
       posReportedAt=Date.now();
       posDuration=state.duration||0;
+      // End-of-track detection: paused, position back near 0, and we were just playing.
+      // The SDK does this dance when a track ends and nothing else is queued.
+      if(wasPlaying && state.paused && state.position===0){
+        handleTrackEnded();
+      }
       renderChain(); renderPlayer();
     });
     sdkPlayer.addListener('initialization_error',e=>console.error('sdk init:',e));
@@ -389,12 +549,12 @@ async function playFullTrack(uri){
       body:JSON.stringify({ uris:[uri] }),
     });
     sdkCurrentUri=uri;
-    playerVisible=true;
+    playerVisible=true; playerCollapsed=false;
     renderPlayer();
   }catch(e){ console.error('play failed',e); }
 }
 
-// --- Player bar ---
+// ---- Player bar ----
 function playerChainIndex(){
   if(!sdkCurrentUri) return -1;
   return chain.findIndex(c=>c.spotify?.uri===sdkCurrentUri);
@@ -411,9 +571,11 @@ function fmtTime(ms){
 function updatePosDisplay(){
   const pos=currentPosition();
   $("pl-time").textContent=fmtTime(pos);
+  const seek=$("pl-seek");
   if(!userDraggingSeek){
     const pct=posDuration?(pos/posDuration)*1000:0;
-    $("pl-seek").value=pct;
+    seek.value=pct;
+    seek.style.setProperty('--pct',`${(pct/10).toFixed(1)}%`);
   }
 }
 function ensureTicker(){
@@ -439,29 +601,58 @@ function renderPlayer(){
   const art=track?.spotify?.albumArt;
   if(art){ $("pl-art").src=art; $("pl-art").style.visibility='visible'; }
   else { $("pl-art").style.visibility='hidden'; }
-  $("pl-play").textContent=sdkPlaying?'⏸':'▶';
-  $("pl-prev").disabled=idx<=0;
-  $("pl-next").disabled=idx<0||idx>=chain.length-1;
+  $("pl-playicon").innerHTML=`<use href="#${sdkPlaying?'i-pause':'i-play'}"/>`;
+  // shuffle/repeat can wrap so prev/next are only strictly disabled when
+  // we can't go anywhere at all.
+  const canGo=chain.filter(c=>c.spotify?.uri).length>1;
+  $("pl-prev").disabled=!canGo || (idx<=0 && !repeatOn && !shuffleOn);
+  $("pl-next").disabled=!canGo || (idx>=chain.length-1 && !repeatOn && !shuffleOn);
+  $("pl-shuffle").classList.toggle('on',shuffleOn);
+  $("pl-repeat").classList.toggle('on',repeatOn);
   $("pl-total").textContent=fmtTime(posDuration);
   updatePosDisplay();
   ensureTicker();
 }
 
-// Wire up player bar controls
+// pick the next / previous URI given shuffle + repeat state
+function pickAdjacent(dir){
+  const playable=chain.map((c,i)=>({i,uri:c.spotify?.uri})).filter(x=>x.uri);
+  if(!playable.length) return null;
+  const idx=playerChainIndex();
+  if(shuffleOn){
+    const others=playable.filter(x=>x.i!==idx);
+    if(!others.length) return null;
+    return others[Math.floor(Math.random()*others.length)].uri;
+  }
+  const currentPos=playable.findIndex(x=>x.i===idx);
+  let nextPos=currentPos+dir;
+  if(nextPos<0) nextPos = repeatOn ? playable.length-1 : -1;
+  if(nextPos>=playable.length) nextPos = repeatOn ? 0 : -1;
+  return nextPos>=0 ? playable[nextPos].uri : null;
+}
+
+async function handleTrackEnded(){
+  if(advancing) return;
+  advancing=true;
+  try{
+    const uri=pickAdjacent(1);
+    if(uri) await playFullTrack(uri);
+    else { playerVisible=false; renderPlayer(); }
+  } finally { setTimeout(()=>{advancing=false;},400); }
+}
+
+// wire up player controls
 $("pl-play").onclick=async()=>{
   if(!sdkPlayer) return;
   try{ sdkPlaying ? await sdkPlayer.pause() : await sdkPlayer.resume(); }
   catch(e){ console.error(e); }
 };
-$("pl-prev").onclick=()=>{
-  const idx=playerChainIndex();
-  if(idx>0) playFullTrack(chain[idx-1].spotify.uri);
-};
-$("pl-next").onclick=()=>{
-  const idx=playerChainIndex();
-  if(idx>=0 && idx<chain.length-1) playFullTrack(chain[idx+1].spotify.uri);
-};
-$("pl-close").onclick=async()=>{
+$("pl-prev").onclick=()=>{ const u=pickAdjacent(-1); if(u) playFullTrack(u); };
+$("pl-next").onclick=()=>{ const u=pickAdjacent(1); if(u) playFullTrack(u); };
+$("pl-shuffle").onclick=()=>{ shuffleOn=!shuffleOn; renderPlayer(); };
+$("pl-repeat").onclick=()=>{ repeatOn=!repeatOn; renderPlayer(); };
+$("pl-collapse").onclick=async()=>{
+  // TODO: expand into full-view player; for now, close.
   if(sdkPlayer){ try{ await sdkPlayer.pause(); }catch(e){} }
   playerVisible=false;
   renderPlayer(); renderChain();
@@ -471,39 +662,45 @@ seek.addEventListener('mousedown',()=>userDraggingSeek=true);
 seek.addEventListener('touchstart',()=>userDraggingSeek=true,{passive:true});
 seek.addEventListener('input',()=>{
   if(!posDuration) return;
-  // update time display while dragging so user sees where they'll land
   const ms=(parseFloat(seek.value)/1000)*posDuration;
   $("pl-time").textContent=fmtTime(ms);
+  seek.style.setProperty('--pct',`${(parseFloat(seek.value)/10).toFixed(1)}%`);
 });
 async function commitSeek(){
   userDraggingSeek=false;
   if(!sdkPlayer || !posDuration) return;
   const ms=Math.floor((parseFloat(seek.value)/1000)*posDuration);
-  try{
-    await sdkPlayer.seek(ms);
-    posReported=ms; posReportedAt=Date.now();
-  }catch(e){ console.error('seek failed',e); }
+  try{ await sdkPlayer.seek(ms); posReported=ms; posReportedAt=Date.now(); }
+  catch(e){ console.error('seek failed',e); }
 }
 seek.addEventListener('mouseup',commitSeek);
 seek.addEventListener('touchend',commitSeek);
 seek.addEventListener('change',commitSeek);
 
-$("pl-vol").addEventListener('input',()=>{
+const vol=$("pl-vol");
+vol.addEventListener('input',()=>{
+  vol.style.setProperty('--vpct',`${vol.value}%`);
   if(!sdkPlayer) return;
-  const v=parseFloat($("pl-vol").value)/100;
-  try{ sdkPlayer.setVolume(v); }catch(e){}
+  try{ sdkPlayer.setVolume(parseFloat(vol.value)/100); }catch(e){}
 });
+vol.style.setProperty('--vpct','60%');
 
-// --- render chain views ---
+// ---- chain views ----
 function renderChain(){
   const hist=$("history");
   hist.innerHTML=chain.map((m,i)=>{
-    const img=m.spotify?.albumArt?`<img src="${esc(m.spotify.albumArt)}" alt="">`:'';
-    return `<div class="hcard">${img}<div class="hbody">
-      <div class="hseq">#${String(i+1).padStart(2,'0')}${m.linkWord?' · '+esc(m.linkWord):''}</div>
-      <div class="htitle">${esc(m.title)}</div>
-      <div class="hartist">${esc(m.artist)}</div>
-    </div></div>`;
+    const img=m.spotify?.albumArt?`<img src="${esc(m.spotify.albumArt)}" alt="">`:'<div style="width:38px;height:38px;border-radius:6px;background:#0e0b1a;flex:0 0 auto"></div>';
+    const isCurrent=i===chain.length-1;
+    const linkMark=m.linkWord?` · <b>${esc(m.linkWord)}</b>`:'';
+    const seqPad=String(i+1).padStart(2,'0');
+    const linkIcon=i<chain.length-1?`<span class="hlink"><svg><use href="#i-chain"/></svg></span>`:'';
+    return `<div class="hcard ${isCurrent?'current':''}">
+      ${img}<div class="hbody">
+        <div class="hseq">#${seqPad}${linkMark}</div>
+        <div class="htitle">${esc(m.title)}</div>
+        <div class="hartist">${esc(m.artist)}</div>
+      </div>
+    </div>${linkIcon}`;
   }).join('');
   hist.scrollLeft=hist.scrollWidth;
 
@@ -529,11 +726,11 @@ function renderChain(){
     <div class="plabel">Link your song to</div>
     <div class="ptitle">${esc(last.title)}</div>
     <div class="partist">${esc(last.artist)}</div>
-    ${forbidDisplay?`<div class="pforbid">cannot reuse <b>${esc(forbidDisplay)}</b></div>`:''}
+    ${forbidDisplay?`<div class="pforbid">CANNOT REUSE <b>${esc(forbidDisplay)}</b></div>`:''}
     <div class="pctrl">
-      ${hasPreview?`<button class="play" id="playbtn">▶ Preview</button>`:''}
-      ${canFull?`<button class="full ${fullIsThis?'playing':''}" id="fullbtn">${fullIsThis?'⏸ Playing full':'▶ Play full'}</button>`:''}
-      ${openLink?`<a href="${esc(openLink)}" target="_blank" rel="noopener">Open in Spotify ↗</a>`:''}
+      ${hasPreview?`<button class="play" id="playbtn"><svg><use href="#i-play"/></svg>Preview</button>`:''}
+      ${canFull?`<button class="full ${fullIsThis?'playing':''}" id="fullbtn"><svg><use href="#i-eq"/></svg>${fullIsThis?'Playing full':'Play full'}</button>`:''}
+      ${openLink?`<a class="spot" href="${esc(openLink)}" target="_blank" rel="noopener"><svg><use href="#i-spot"/></svg>Open in Spotify</a>`:''}
       ${!hasPreview&&!canFull&&!openLink?'<span class="noprev">no audio available</span>':''}
     </div>
   </div>`;
@@ -543,48 +740,41 @@ function renderChain(){
   if(fb) fb.onclick=()=>playFullTrack(last.spotify.uri);
 }
 
-// --- preview player ---
+// ---- preview player ----
 function togglePreview(url,btn){
   if(audio.src===url && !audio.paused){
-    audio.pause();
-    btn.classList.remove('playing');
-    btn.textContent='▶ Preview';
-    return;
+    audio.pause(); btn.innerHTML='<svg><use href="#i-play"/></svg>Preview'; return;
   }
   if(sdkPlaying && sdkPlayer){ try{ sdkPlayer.pause(); }catch(e){} }
   audio.src=url;
-  audio.play().then(()=>{
-    btn.classList.add('playing');
-    btn.textContent='⏸ Playing';
-  }).catch(()=>{ btn.textContent='▶ Preview'; });
+  audio.play().then(()=>{ btn.innerHTML='<svg><use href="#i-pause"/></svg>Playing'; })
+    .catch(()=>{ btn.innerHTML='<svg><use href="#i-play"/></svg>Preview'; });
 }
 audio.addEventListener('ended',()=>{
-  const pb=$("playbtn"); if(pb){ pb.classList.remove('playing'); pb.textContent='▶ Preview'; }
+  const pb=$("playbtn"); if(pb) pb.innerHTML='<svg><use href="#i-play"/></svg>Preview';
 });
-
 function autoPlayLatest(){
   const last=chain[chain.length-1];
-  if(!last?.spotify?.previewUrl) return;
-  if(sdkPlaying) return;
+  if(!last?.spotify?.previewUrl || sdkPlaying) return;
   audio.src=last.spotify.previewUrl;
   audio.play().then(()=>{
-    const pb=$("playbtn"); if(pb){ pb.classList.add('playing'); pb.textContent='⏸ Playing'; }
+    const pb=$("playbtn"); if(pb) pb.innerHTML='<svg><use href="#i-pause"/></svg>Playing';
   }).catch(()=>{});
 }
 
-// --- word picker ---
+// ---- word picker ----
 function refreshWords(){
   const isOpening=chain.length===0;
-  $("linkBlock").style.display=isOpening?'none':'block';
-  $("turn").textContent=isOpening?'Opening move':`Player ${(chain.length%4)+1}'s turn`;
-  $("go").textContent=isOpening?'Start the chain':'Name this song';
+  $("linkField").style.display=isOpening?'none':'flex';
+  $("turnText").textContent=isOpening?'Opening move':`Player ${(chain.length%4)+1}'s turn`;
+  $("goText").textContent=isOpening?'Start the chain':'Name this song';
   if(isOpening){validate();return;}
   const words=linkable(titleEl.value,artistEl.value);
   $("words").innerHTML=words.length?words.map(w=>{
     const dead=forbiddenStem&&w.stem===forbiddenStem;
     const sel=selected&&selected.stem===w.stem;
     return `<span class="w ${dead?'dead':''} ${sel?'sel':''}" data-s="${w.stem}" data-d="${esc(w.display)}">${esc(w.display)}</span>`;
-  }).join(''):'<span class="hint">Type your title &amp; artist above, then pick the linking word here.</span>';
+  }).join(''):'';
   validate();
 }
 $("words").addEventListener("click",e=>{
@@ -665,12 +855,12 @@ $("save").addEventListener("click",async()=>{
       body:JSON.stringify({name,trackUris})});
     const data=await r.json();
     if(data.url){
-      btn.textContent='✓ Playlist saved — open';
+      btn.innerHTML='<svg><use href="#i-menu"/></svg><span>✓ Playlist saved — open</span>';
       btn.onclick=()=>window.open(data.url,'_blank');
     } else {
-      btn.textContent='Save failed — try again';
+      btn.innerHTML='<svg><use href="#i-menu"/></svg><span>Save failed — try again</span>';
     }
-  }catch(e){ btn.textContent='Save failed — try again'; }
+  }catch(e){ btn.innerHTML='<svg><use href="#i-menu"/></svg><span>Save failed — try again</span>'; }
   btn.disabled=false;
 });
 
@@ -678,9 +868,7 @@ const urlParams=new URLSearchParams(location.search);
 const spotResult=urlParams.get('spotify');
 if(spotResult){
   history.replaceState({},'',location.pathname);
-  if(spotResult!=='ok'){
-    setTimeout(()=>showMsg("Couldn't connect Spotify. Try again?",'err'),300);
-  }
+  if(spotResult!=='ok') setTimeout(()=>showMsg("Couldn't connect Spotify. Try again?",'err'),300);
 }
 
 loadSpotifyUser();
