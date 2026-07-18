@@ -15,6 +15,7 @@ const { validateMove, stem, rawTokens } = require('../lib/wordlink');
 const { verifySong } = require('../lib/verify');
 const { searchTrack } = require('../lib/spotify');
 const { Client } = require('pg');
+const { searchItunesPreview } = require('../lib/itunes');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
@@ -46,7 +47,19 @@ module.exports = async function handler(req, res) {
   if (!verification.found) {
     if (allowOverride) {
       // Group vote: accept anyway. Still try to find it on Spotify for media.
-      const spotify = await searchTrack(next.title, next.artist);
+      const [spotify, itunesPreview] = await Promise.all([
+    searchTrack(
+      verification.canonicalTitle || next.title,
+      verification.canonicalArtist || next.artist,
+    ),
+    searchItunesPreview(
+      verification.canonicalTitle || next.title,
+      verification.canonicalArtist || next.artist,
+    ),
+  ]);
+  // Spotify's preview_url is null for new apps; use iTunes and fall back to
+  // Spotify's if by some miracle it comes back populated.
+  if (spotify) spotify.previewUrl = itunesPreview || spotify.previewUrl;
       return res.status(200).json({
         accepted: true,
         override: true,
@@ -65,10 +78,19 @@ module.exports = async function handler(req, res) {
 
   // MusicBrainz confirmed. Get Spotify data as a bonus (best-effort).
   // Use the canonical names — Spotify's search does better with clean strings.
-  const spotify = await searchTrack(
-    verification.canonicalTitle || next.title,
-    verification.canonicalArtist || next.artist,
-  );
+  const [spotify, itunesPreview] = await Promise.all([
+    searchTrack(
+      verification.canonicalTitle || next.title,
+      verification.canonicalArtist || next.artist,
+    ),
+    searchItunesPreview(
+      verification.canonicalTitle || next.title,
+      verification.canonicalArtist || next.artist,
+    ),
+  ]);
+  // Spotify's preview_url is null for new apps; use iTunes and fall back to
+  // Spotify's if by some miracle it comes back populated.
+  if (spotify) spotify.previewUrl = itunesPreview || spotify.previewUrl;
 
   return res.status(200).json({
     accepted: true,
