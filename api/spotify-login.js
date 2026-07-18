@@ -23,6 +23,7 @@ const SCOPES = [
   'user-read-email',
   'playlist-modify-private',
   'streaming',
+  'playlist-modify-public',			
   'user-modify-playback-state',
   'user-read-playback-state',
 ].join(' ');
