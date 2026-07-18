@@ -10,12 +10,20 @@
   :root{
     --bg:#0b0917; --bg-2:#0e0b1c;
     --panel:#141026; --panel-2:#1a1530;
-    --ink:#f4f0ff; --dim:#8a82a8; --dimmer:#5a5378;
+    --input:#1c1735;
+    --ink:#f4f0ff; --dim:#a099c0; --dimmer:#6a6288;
     --hot:#ff5d73; --lime:#c2f970; --violet:#9b6dff; --spot:#1db954;
     --line:#26203f; --line-2:#332a52;
+    /* All heights sum to this on mobile so the whole app fits without scroll. */
+    --header-h:34px;
+    --history-h:52px;
+    --hero-h:96px;
+    --panel-h:auto;
+    --save-h:40px;
+    --player-h:120px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
+  html,body{height:100%;overflow-x:hidden}
   body{
     background:
       radial-gradient(1100px 600px at 85% -10%, rgba(155,109,255,.20), transparent 60%),
@@ -24,233 +32,224 @@
     color:var(--ink); font-family:'Bricolage Grotesque',system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    min-height:100vh;
   }
-  body.has-player .wrap{padding-bottom:200px}
+  /* Reserve player-bar height so the sticky bar never occludes content. */
+  body.has-player{padding-bottom:var(--player-h)}
 
-  .wrap{max-width:640px;margin:0 auto;padding:18px 18px 24px;display:flex;flex-direction:column;gap:14px}
+  .wrap{max-width:640px;margin:0 auto;padding:10px 14px 14px;
+    display:flex;flex-direction:column;gap:8px}
 
-  /* --- header --- */
-  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
-  .brand{display:flex;align-items:center;gap:10px}
-  .brand svg{width:38px;height:22px;flex:0 0 auto}
-  .brand .name{font-size:22px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;font-style:italic}
+  /* --- combined header (logo + turn + spotify status all on one row) --- */
+  header{display:flex;align-items:center;gap:10px;height:var(--header-h)}
+  .brand{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  .brand svg.logo{width:32px;height:19px;flex:0 0 auto}
+  .brand .name{font-size:17px;font-weight:900;letter-spacing:.4px;
+    text-transform:uppercase;font-style:italic;line-height:1}
   .brand .name .x{color:var(--hot)}
-  .tag{display:inline-flex;align-items:center;gap:6px;font-family:'Spline Sans Mono',monospace;
-    font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
-  .tag svg{width:14px;height:14px}
+  .turn{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim);
+    text-transform:uppercase;letter-spacing:1.5px;flex:1;text-align:left;padding-left:6px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spot-inline{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  .spot-inline .dot{width:8px;height:8px;border-radius:50%;background:var(--dimmer)}
+  .spot-inline.on .dot{background:var(--spot);box-shadow:0 0 8px rgba(29,185,84,.6)}
+  .spot-inline .who{font-size:13px;font-weight:600;max-width:120px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+  .spot-inline .badge{background:rgba(155,109,255,.18);color:var(--violet);
+    font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:1px;
+    padding:3px 6px;border-radius:5px;font-weight:600}
+  .spot-inline button{background:transparent;border:1px solid var(--line-2);color:var(--ink);
+    padding:6px 10px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px;font-weight:500}
+  .spot-inline button svg{width:12px;height:12px}
+  .spot-inline button.primary{background:var(--spot);border-color:var(--spot);color:#000;font-weight:700}
 
-  /* --- spotify bar --- */
-  .spotbar{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);
-    border-radius:14px;padding:12px 14px;font-size:13px}
-  .spotbar .dot{width:9px;height:9px;border-radius:50%;background:var(--dimmer);flex:0 0 auto}
-  .spotbar.on .dot{background:var(--spot);box-shadow:0 0 10px rgba(29,185,84,.6)}
-  .spotbar .who{flex:1;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
-  .spotbar.on .who{color:var(--ink);font-size:16px}
-  .spotbar .badge{background:rgba(155,109,255,.18);color:var(--violet);
-    font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:1.2px;
-    padding:4px 9px;border-radius:6px;font-weight:600}
-  .spotbar button{background:transparent;border:1px solid var(--line-2);color:var(--ink);
-    padding:8px 14px;border-radius:10px;font-family:inherit;font-size:12px;cursor:pointer;
-    display:inline-flex;align-items:center;gap:6px;font-weight:500}
-  .spotbar button svg{width:14px;height:14px}
-  .spotbar button.primary{background:var(--spot);border-color:var(--spot);color:#000;font-weight:700}
-
-  /* --- history strip --- */
-  .history{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;align-items:center;scrollbar-width:none}
+  /* --- compact history strip --- */
+  .history{display:flex;gap:6px;overflow-x:auto;height:var(--history-h);
+    align-items:center;scrollbar-width:none;padding:2px 0}
   .history::-webkit-scrollbar{display:none}
-  .hcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;
-    padding:10px 12px;min-width:160px;max-width:220px;display:flex;gap:10px;align-items:center;
-    transition:.15s}
-  .hcard.current{border-color:var(--violet);background:rgba(155,109,255,.06)}
-  .hcard img{width:38px;height:38px;border-radius:6px;object-fit:cover;flex:0 0 auto;background:#0e0b1a}
+  .hcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:9px;
+    padding:6px 9px;min-width:130px;max-width:180px;display:flex;gap:7px;align-items:center;height:44px}
+  .hcard.current{border-color:var(--violet);background:rgba(155,109,255,.08)}
+  .hcard img{width:30px;height:30px;border-radius:4px;object-fit:cover;flex:0 0 auto;background:#0e0b1a}
   .hcard .hbody{min-width:0;flex:1}
-  .hcard .hseq{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
-  .hcard .hseq b{color:var(--violet);font-weight:600}
-  .hcard .htitle{font-size:13px;font-weight:700;line-height:1.2;margin-top:2px;
+  .hcard .hseq{font-family:'Spline Sans Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:.8px;line-height:1}
+  .hcard .htitle{font-size:11px;font-weight:700;line-height:1.2;margin-top:2px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .hcard .hartist{font-size:11px;color:var(--dim);margin-top:1px;
+  .hcard .hartist{font-size:10px;color:var(--dim);line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .hlink{flex:0 0 auto;color:var(--dim);display:flex;align-items:center}
-  .hlink svg{width:22px;height:22px}
+  .hlink{flex:0 0 auto;color:var(--dim);opacity:.6;display:flex;align-items:center}
+  .hlink svg{width:16px;height:16px}
+  .hempty{color:var(--dim);font-family:'Spline Sans Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:1.5px;padding:8px 4px}
 
-  /* --- previous song hero card --- */
-  .prev{background:linear-gradient(140deg, rgba(155,109,255,.18) 0%, rgba(155,109,255,.06) 40%, rgba(255,93,115,.08) 100%);
-    border:1px solid rgba(155,109,255,.35);border-radius:20px;padding:20px 22px;
-    display:flex;gap:18px;align-items:center}
-  .prev.empty{background:var(--panel);border-color:var(--line);text-align:center;padding:26px 18px;display:block}
-  .prev img{width:112px;height:112px;border-radius:10px;object-fit:cover;flex:0 0 auto;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+  /* --- hero card (previous song) --- */
+  .prev{background:linear-gradient(140deg, rgba(155,109,255,.16) 0%, rgba(155,109,255,.05) 45%, rgba(255,93,115,.06) 100%);
+    border:1px solid rgba(155,109,255,.32);border-radius:14px;padding:12px 14px;
+    display:flex;gap:12px;align-items:center;min-height:var(--hero-h)}
+  .prev.empty{background:var(--panel);border-color:var(--line);text-align:center;padding:16px;display:block;min-height:auto}
+  .prev img{width:72px;height:72px;border-radius:8px;object-fit:cover;flex:0 0 auto;box-shadow:0 4px 14px rgba(0,0,0,.45)}
   .prev .pbody{flex:1;min-width:0}
-  .prev .plabel{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--violet);
-    text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;font-weight:500}
-  .prev .ptitle{font-size:34px;font-weight:800;line-height:1.05;letter-spacing:-.7px;
+  .prev .plabel{font-family:'Spline Sans Mono',monospace;font-size:9px;color:var(--violet);
+    text-transform:uppercase;letter-spacing:2px;margin-bottom:2px;font-weight:500}
+  .prev .ptitle{font-size:20px;font-weight:800;line-height:1.1;letter-spacing:-.4px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .prev .partist{font-size:16px;color:var(--dim);margin-top:4px;
+  .prev .partist{font-size:12px;color:var(--dim);margin-top:1px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .prev .pforbid{margin-top:12px;display:inline-flex;align-items:center;gap:8px;
-    font-family:'Spline Sans Mono',monospace;font-size:11px;color:#ff97a6;text-transform:uppercase;letter-spacing:1.5px}
-  .prev .pforbid b{background:rgba(255,93,115,.20);padding:3px 9px;border-radius:6px;
-    font-family:'Bricolage Grotesque',sans-serif;text-transform:none;font-size:12px;color:#ff97a6;font-weight:600;letter-spacing:0}
-  .prev.empty .ptitle{font-size:17px;font-weight:600;color:var(--dim);letter-spacing:0}
-
-  .prev .pctrl{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-  .prev .pctrl button, .prev .pctrl a{
-    display:inline-flex;align-items:center;gap:7px;
-    padding:10px 16px;border-radius:10px;
-    font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  .prev .pforbid{margin-top:6px;display:inline-flex;align-items:center;gap:6px;
+    font-family:'Spline Sans Mono',monospace;font-size:9px;color:#ff97a6;
+    text-transform:uppercase;letter-spacing:1.2px}
+  .prev .pforbid b{background:rgba(255,93,115,.20);padding:2px 6px;border-radius:5px;
+    font-family:'Bricolage Grotesque',sans-serif;text-transform:none;font-size:11px;color:#ff97a6;font-weight:600;letter-spacing:0}
+  .prev.empty .ptitle{font-size:14px;font-weight:600;color:var(--dim);letter-spacing:0}
+  .prev .pctrl{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .prev .pctrl button,.prev .pctrl a{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:6px 10px;border-radius:8px;
+    font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;
     text-decoration:none;border:1px solid var(--line-2);
     background:rgba(255,255,255,.04);color:var(--ink);transition:.15s}
-  .prev .pctrl button svg, .prev .pctrl a svg{width:14px;height:14px}
-  .prev .pctrl button.play{background:transparent;border-color:var(--lime);color:var(--lime)}
-  .prev .pctrl button.play:hover{background:rgba(194,249,112,.08)}
-  .prev .pctrl button.play.playing{background:rgba(194,249,112,.12)}
-  .prev .pctrl button.full{background:transparent;border-color:var(--lime);color:var(--lime)}
+  .prev .pctrl button svg,.prev .pctrl a svg{width:12px;height:12px}
+  .prev .pctrl button.play{border-color:var(--lime);color:var(--lime);background:transparent}
+  .prev .pctrl button.full{border-color:var(--lime);color:var(--lime);background:transparent}
   .prev .pctrl button.full.playing{background:rgba(194,249,112,.12)}
   .prev .pctrl a.spot{background:var(--spot);border-color:var(--spot);color:#000;font-weight:700}
-  .prev .noprev{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim);margin-top:8px}
 
-  /* --- input panel --- */
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 22px}
-  .field{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
-  .field:last-of-type{border-bottom:none}
-  .field .ficon{width:22px;color:var(--dim);flex:0 0 auto;margin-top:24px}
-  .field .ficon svg{width:22px;height:22px}
-  .field .fbody{flex:1;min-width:0}
-  .flabel{font-family:'Spline Sans Mono',monospace;font-size:10px;text-transform:uppercase;
-    letter-spacing:1.5px;color:var(--dim);margin-bottom:8px;font-weight:500}
+  /* --- input panel: compact + high-contrast inputs --- */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .field{display:flex;gap:10px;padding:8px 0;align-items:center}
+  .field+.field{border-top:1px solid var(--line)}
+  .field .ficon{width:20px;color:var(--dim);flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+  .field .ficon svg{width:18px;height:18px}
+  .field .fbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .flabel{font-family:'Spline Sans Mono',monospace;font-size:9px;text-transform:uppercase;
+    letter-spacing:1.2px;color:var(--dim);font-weight:500;line-height:1}
   input.txt{width:100%;background:transparent;border:none;color:var(--ink);
-    font-family:inherit;font-size:16px;padding:2px 0;outline:none}
-  input.txt::placeholder{color:var(--dimmer)}
-  .hint{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.4}
+    font-family:inherit;font-size:15px;padding:2px 0;outline:none;line-height:1.2}
+  input.txt::placeholder{color:rgba(160,153,192,.45)}
+  input.txt:focus{color:#fff}
+  .hint{font-size:10px;color:var(--dim);line-height:1.3}
 
-  .words{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
-  .w{font-family:'Spline Sans Mono',monospace;font-size:13px;padding:9px 13px;border-radius:9px;
-    background:rgba(255,255,255,.03);border:1px solid var(--line-2);color:var(--ink);cursor:pointer;transition:.15s}
+  .words{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+  .w{font-family:'Spline Sans Mono',monospace;font-size:11px;padding:5px 9px;border-radius:7px;
+    background:rgba(255,255,255,.04);border:1px solid var(--line-2);color:var(--ink);cursor:pointer;transition:.15s;line-height:1}
   .w:hover{border-color:var(--violet)}
   .w.sel{background:var(--lime);color:#101010;border-color:var(--lime);font-weight:700}
   .w.dead{opacity:.3;cursor:not-allowed;text-decoration:line-through}
   .w.dead:hover{border-color:var(--line-2)}
 
-  button.go{width:100%;margin-top:16px;background:transparent;color:var(--ink);
+  button.go{width:100%;margin-top:10px;background:transparent;color:var(--dimmer);
     border:1px solid var(--line-2);
-    font-family:inherit;font-weight:600;font-size:16px;padding:16px;border-radius:12px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:14px;padding:11px 14px;border-radius:10px;cursor:pointer;
     display:flex;align-items:center;justify-content:space-between;transition:.15s}
   button.go:not(:disabled){background:var(--hot);border-color:var(--hot);color:#fff;font-weight:700}
-  button.go:not(:disabled) svg{opacity:.9}
-  button.go:disabled{color:var(--dimmer);cursor:not-allowed}
-  button.go svg{width:18px;height:18px}
+  button.go svg{width:16px;height:16px;opacity:.9}
+  button.go:disabled svg{opacity:.4}
   button.go:not(:disabled):active{transform:scale(.99)}
 
-  .msg{margin-top:12px;font-size:13px;padding:11px 14px;border-radius:10px;display:none;line-height:1.4}
+  .msg{margin-top:8px;font-size:12px;padding:8px 11px;border-radius:8px;display:none;line-height:1.4}
   .msg.err{display:block;background:rgba(255,93,115,.12);color:#ff97a6;border:1px solid rgba(255,93,115,.3)}
   .msg.ok{display:block;background:rgba(194,249,112,.1);color:var(--lime);border:1px solid rgba(194,249,112,.3)}
-  .ovrbar{margin-top:11px;display:none;gap:8px}
+  .ovrbar{margin-top:8px;display:none;gap:8px}
   .ovrbar.show{display:flex}
-  .ovrbar button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line-2);
-    background:transparent;color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer}
+  .ovrbar button{flex:1;padding:9px;border-radius:8px;border:1px solid var(--line-2);
+    background:transparent;color:var(--ink);font-family:inherit;font-size:12px;cursor:pointer}
   .ovrbar button.yes{border-color:var(--lime);color:var(--lime)}
 
   .savebtn{width:100%;background:var(--lime);color:#101010;border:none;font-family:inherit;font-weight:700;
-    font-size:15px;padding:16px;border-radius:14px;cursor:pointer;display:none;
-    align-items:center;justify-content:center;gap:10px}
+    font-size:13px;padding:10px;border-radius:10px;cursor:pointer;display:none;
+    align-items:center;justify-content:center;gap:8px;height:var(--save-h)}
   .savebtn.show{display:flex}
-  .savebtn svg{width:18px;height:18px}
+  .savebtn svg{width:15px;height:15px}
   .savebtn:disabled{opacity:.6;cursor:wait}
 
-  footer{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--dimmer);letter-spacing:1.5px}
-
-  /* --- sticky player bar --- */
+  /* --- sticky player: full viewport width, docked flat to the bottom --- */
   .player{
-    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-    width:100%;max-width:640px;
-    background:linear-gradient(180deg, rgba(20,16,38,.98) 0%, rgba(11,9,23,1) 100%);
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--bg-2);
     border-top:1px solid var(--line);
-    padding:14px 18px calc(14px + env(safe-area-inset-bottom));
-    display:none;flex-direction:column;gap:10px;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:none;flex-direction:column;gap:6px;
     z-index:100;
-    backdrop-filter:blur(16px);
-    -webkit-backdrop-filter:blur(16px);
-    box-shadow:0 -12px 40px rgba(0,0,0,.4);
+    height:calc(var(--player-h) + env(safe-area-inset-bottom))
   }
   .player.show{display:flex}
+  .player-inner{max-width:640px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:6px}
 
-  .pl-top{display:flex;align-items:center;gap:14px}
-  .pl-art{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:0 0 auto;background:#0e0b1a;
-    box-shadow:0 4px 14px rgba(0,0,0,.4)}
-  .pl-meta{flex:1;min-width:0}
-  .pl-title{font-size:15px;font-weight:700;line-height:1.2;
+  .pl-top{display:flex;align-items:center;gap:10px}
+  .pl-art{width:44px;height:44px;border-radius:6px;object-fit:cover;flex:0 0 auto;background:#0e0b1a}
+  .pl-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .pl-title{font-size:13px;font-weight:700;line-height:1.15;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pl-artist{font-size:12px;color:var(--dim);margin-top:2px;
+  .pl-artist{font-size:11px;color:var(--dim);line-height:1.15;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pl-nowplaying{display:inline-flex;align-items:center;gap:5px;margin-top:5px;
-    font-family:'Spline Sans Mono',monospace;font-size:9px;color:var(--lime);
-    background:rgba(194,249,112,.12);padding:3px 7px;border-radius:5px;
-    text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
-  .pl-nowplaying svg{width:10px;height:10px}
-  .pl-collapse{background:transparent;border:none;color:var(--dim);cursor:pointer;padding:6px}
-  .pl-collapse svg{width:18px;height:18px}
+  .pl-nowplaying{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;
+    font-family:'Spline Sans Mono',monospace;font-size:8px;color:var(--lime);
+    background:rgba(194,249,112,.12);padding:2px 6px;border-radius:4px;
+    text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:2px}
+  .pl-nowplaying svg{width:9px;height:9px}
+  .pl-collapse{background:transparent;border:none;color:var(--dim);cursor:pointer;padding:4px}
+  .pl-collapse svg{width:16px;height:16px}
   .pl-collapse:hover{color:var(--ink)}
 
-  .pl-controls{display:flex;align-items:center;justify-content:center;gap:16px}
+  .pl-mid{display:flex;align-items:center;gap:10px}
+  .pl-controls{display:flex;align-items:center;gap:10px;flex:0 0 auto}
   .pl-controls button{background:transparent;border:none;color:var(--dim);
-    cursor:pointer;padding:6px;border-radius:8px;transition:.15s;
+    cursor:pointer;padding:4px;border-radius:6px;transition:.15s;
     display:inline-flex;align-items:center;justify-content:center}
-  .pl-controls button svg{width:20px;height:20px}
+  .pl-controls button svg{width:16px;height:16px}
   .pl-controls button:hover:not(:disabled){color:var(--ink)}
   .pl-controls button:disabled{opacity:.25;cursor:not-allowed}
   .pl-controls button.toggle.on{color:var(--lime)}
-  .pl-controls .pl-play{background:var(--ink);color:var(--bg);
-    width:44px;height:44px;border-radius:50%;padding:0}
-  .pl-controls .pl-play svg{width:18px;height:18px}
+  .pl-controls .pl-play{background:var(--ink);color:var(--bg);width:34px;height:34px;border-radius:50%;padding:0}
+  .pl-controls .pl-play svg{width:14px;height:14px}
   .pl-controls .pl-play:hover:not(:disabled){background:var(--lime);color:var(--bg)}
 
-  .pl-seekrow{display:flex;align-items:center;gap:10px;
-    font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--dim)}
-  .pl-time,.pl-total{min-width:36px}
+  .pl-seekwrap{flex:1;min-width:0;display:flex;align-items:center;gap:8px;
+    font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim)}
+  .pl-time,.pl-total{min-width:30px}
   .pl-total{text-align:right}
   input[type=range].pl-seek{
-    flex:1;height:5px;-webkit-appearance:none;appearance:none;
-    background:linear-gradient(to right, var(--lime) 0%, var(--lime) var(--pct,0%), var(--line) var(--pct,0%), var(--line) 100%);
-    border-radius:3px;outline:none;padding:0;border:none;cursor:pointer}
-  input[type=range].pl-seek::-webkit-slider-thumb{
-    -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
-    background:var(--ink);cursor:pointer;border:none}
-  input[type=range].pl-seek::-moz-range-thumb{
-    width:13px;height:13px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
-
-  .pl-volrow{display:flex;align-items:center;gap:8px;margin-left:auto;max-width:180px}
-  .pl-volicon{color:var(--dim);display:inline-flex}
-  .pl-volicon svg{width:16px;height:16px}
-  input[type=range].pl-vol{
     flex:1;height:4px;-webkit-appearance:none;appearance:none;
-    background:linear-gradient(to right, var(--lime) 0%, var(--lime) var(--vpct,60%), var(--line) var(--vpct,60%), var(--line) 100%);
+    background:linear-gradient(to right, var(--lime) 0%, var(--lime) var(--pct,0%), var(--line-2) var(--pct,0%), var(--line-2) 100%);
     border-radius:2px;outline:none;padding:0;border:none;cursor:pointer}
-  input[type=range].pl-vol::-webkit-slider-thumb{
+  input[type=range].pl-seek::-webkit-slider-thumb{
     -webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
-  input[type=range].pl-vol::-moz-range-thumb{
+  input[type=range].pl-seek::-moz-range-thumb{
     width:11px;height:11px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
 
-  .pl-bottomrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .pl-bottomrow .pl-seekrow{flex:1;min-width:200px}
+  .pl-volwrap{display:flex;align-items:center;gap:6px;flex:0 0 auto;max-width:110px}
+  .pl-volicon{color:var(--dim);display:inline-flex}
+  .pl-volicon svg{width:14px;height:14px}
+  input[type=range].pl-vol{
+    flex:1;height:3px;-webkit-appearance:none;appearance:none;
+    background:linear-gradient(to right, var(--lime) 0%, var(--lime) var(--vpct,60%), var(--line-2) var(--vpct,60%), var(--line-2) 100%);
+    border-radius:2px;outline:none;padding:0;border:none;cursor:pointer;width:70px}
+  input[type=range].pl-vol::-webkit-slider-thumb{
+    -webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
+  input[type=range].pl-vol::-moz-range-thumb{
+    width:10px;height:10px;border-radius:50%;background:var(--ink);cursor:pointer;border:none}
 
-  /* mobile tightening */
-  @media (max-width:520px){
-    .wrap{padding:14px 14px 20px}
-    .prev{padding:16px 16px;gap:14px}
-    .prev img{width:88px;height:88px}
-    .prev .ptitle{font-size:26px}
-    .prev .partist{font-size:14px}
-    .panel{padding:14px 16px}
-    .brand svg{width:32px;height:20px}
-    .brand .name{font-size:19px}
-    .pl-art{width:52px;height:52px}
-    .pl-bottomrow{flex-direction:column;align-items:stretch;gap:8px}
-    .pl-volrow{max-width:none;margin-left:0}
+  /* --- mobile: even more compact --- */
+  @media (max-width:480px){
+    .wrap{padding:8px 12px 12px;gap:7px}
+    .brand .name{font-size:15px}
+    .brand svg.logo{width:28px;height:17px}
+    .spot-inline .who{max-width:90px;font-size:12px}
+    .prev{padding:10px 12px;gap:10px}
+    .prev img{width:60px;height:60px}
+    .prev .ptitle{font-size:17px}
+    .prev .partist{font-size:11px}
+    .panel{padding:10px 12px}
+    .field{padding:6px 0}
+    input.txt{font-size:14px}
+    button.go{padding:10px 12px;font-size:13px}
+    .pl-volwrap{display:none}   /* mobile: use device volume, save room */
   }
 </style>
 </head>
 <body>
 
-<!-- SVG icon symbols reused throughout -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="brandg" x1="0" y1="0" x2="1" y2="0">
@@ -258,11 +257,11 @@
       <stop offset="55%" stop-color="#9b6dff"/>
       <stop offset="100%" stop-color="#ff5d73"/>
     </linearGradient>
-    <symbol id="i-chain" viewBox="0 0 24 24">
-      <path d="M10 14l-2 2a4 4 0 01-6-6l3-3a4 4 0 016 0M14 10l2-2a4 4 0 016 6l-3 3a4 4 0 01-6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </symbol>
     <symbol id="i-brand" viewBox="0 0 42 24">
       <path d="M12 12a6 6 0 100 .1M30 12a6 6 0 100 .1M14 12h14" stroke="url(#brandg)" stroke-width="3" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="i-chain" viewBox="0 0 24 24">
+      <path d="M10 14l-2 2a4 4 0 01-6-6l3-3a4 4 0 016 0M14 10l2-2a4 4 0 016 6l-3 3a4 4 0 01-6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </symbol>
     <symbol id="i-user" viewBox="0 0 24 24">
       <path d="M16 8a4 4 0 11-8 0 4 4 0 018 0zM4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
@@ -293,7 +292,6 @@
       <path d="M15 9a4 4 0 010 6M18 6a8 8 0 010 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
     </symbol>
     <symbol id="i-chevup" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
-    <symbol id="i-chevdown" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
     <symbol id="i-signout" viewBox="0 0 24 24">
       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </symbol>
@@ -318,20 +316,19 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <svg><use href="#i-brand"/></svg>
+      <svg class="logo"><use href="#i-brand"/></svg>
       <span class="name">Chain<span class="x">song</span></span>
     </div>
-    <span class="tag" id="turn"><svg><use href="#i-user"/></svg><span id="turnText">Opening move</span></span>
+    <span class="turn" id="turn">Opening move</span>
+    <div class="spot-inline" id="spotbar">
+      <span class="dot"></span>
+      <span class="who" id="spotwho" style="display:none">—</span>
+      <span class="badge" id="spotbadge" style="display:none">PREMIUM</span>
+      <button id="spotbtn" class="primary"><svg><use href="#i-spot"/></svg><span id="spotbtntxt">Connect</span></button>
+    </div>
   </header>
 
-  <div class="spotbar" id="spotbar">
-    <span class="dot"></span>
-    <span class="who" id="spotwho">Not connected to Spotify</span>
-    <span class="badge" id="spotbadge" style="display:none">PREMIUM</span>
-    <button id="spotbtn" class="primary"><svg><use href="#i-spot"/></svg><span>Connect Spotify</span></button>
-  </div>
-
-  <div class="history" id="history"></div>
+  <div class="history" id="history"><span class="hempty">no songs yet</span></div>
 
   <div class="prev empty" id="prev">
     <div class="ptitle">Name any song to start the chain</div>
@@ -341,7 +338,7 @@
     <div class="field">
       <div class="ficon"><svg><use href="#i-music"/></svg></div>
       <div class="fbody">
-        <div class="flabel">Your song — title</div>
+        <div class="flabel">Title</div>
         <input class="txt" id="title" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. I Will Always Love You">
       </div>
     </div>
@@ -355,15 +352,14 @@
     <div class="field">
       <div class="ficon"><svg><use href="#i-pencil"/></svg></div>
       <div class="fbody">
-        <div class="flabel">Describe it (a lyric, the year, the vibe — optional)</div>
-        <input class="txt" id="desc" autocomplete="off" placeholder="helps the table trust you weren't googling">
+        <div class="flabel">Describe it — optional</div>
+        <input class="txt" id="desc" autocomplete="off" placeholder="a lyric, the year, the vibe">
       </div>
     </div>
     <div class="field" id="linkField" style="display:none">
       <div class="ficon"><svg><use href="#i-link"/></svg></div>
       <div class="fbody">
-        <div class="flabel">Which word links to the previous song?</div>
-        <div class="hint">Type your title &amp; artist above, then pick the linking word.</div>
+        <div class="flabel">Linking word</div>
         <div class="words" id="words"></div>
       </div>
     </div>
@@ -383,37 +379,36 @@
     <svg><use href="#i-menu"/></svg>
     <span>Save chain as Spotify playlist</span>
   </button>
-
-  <footer>PASS &amp; PLAY · v0.6</footer>
 </div>
 
-<!-- Sticky player bar -->
 <div class="player" id="player">
-  <div class="pl-top">
-    <img class="pl-art" id="pl-art" alt="">
-    <div class="pl-meta">
-      <div class="pl-title" id="pl-title">—</div>
-      <div class="pl-artist" id="pl-artist"></div>
-      <span class="pl-nowplaying"><svg><use href="#i-eq"/></svg>Playing full</span>
+  <div class="player-inner">
+    <div class="pl-top">
+      <img class="pl-art" id="pl-art" alt="">
+      <div class="pl-meta">
+        <div class="pl-title" id="pl-title">—</div>
+        <div class="pl-artist" id="pl-artist"></div>
+        <span class="pl-nowplaying"><svg><use href="#i-eq"/></svg>Playing full</span>
+      </div>
+      <button class="pl-collapse" id="pl-collapse" title="Close"><svg><use href="#i-chevup"/></svg></button>
     </div>
-    <button class="pl-collapse" id="pl-collapse" title="Collapse"><svg><use href="#i-chevup"/></svg></button>
-  </div>
-  <div class="pl-controls">
-    <button class="toggle" id="pl-shuffle" title="Shuffle"><svg><use href="#i-shuffle"/></svg></button>
-    <button id="pl-prev" title="Previous song in chain"><svg><use href="#i-prev"/></svg></button>
-    <button class="pl-play" id="pl-play" title="Play/Pause"><svg id="pl-playicon"><use href="#i-play"/></svg></button>
-    <button id="pl-next" title="Next song in chain"><svg><use href="#i-next"/></svg></button>
-    <button class="toggle" id="pl-repeat" title="Repeat chain"><svg><use href="#i-repeat"/></svg></button>
-  </div>
-  <div class="pl-bottomrow">
-    <div class="pl-seekrow">
-      <span class="pl-time" id="pl-time">0:00</span>
-      <input type="range" class="pl-seek" id="pl-seek" min="0" max="1000" value="0">
-      <span class="pl-total" id="pl-total">0:00</span>
-    </div>
-    <div class="pl-volrow">
-      <span class="pl-volicon"><svg><use href="#i-vol"/></svg></span>
-      <input type="range" class="pl-vol" id="pl-vol" min="0" max="100" value="60">
+    <div class="pl-mid">
+      <div class="pl-controls">
+        <button class="toggle" id="pl-shuffle" title="Shuffle"><svg><use href="#i-shuffle"/></svg></button>
+        <button id="pl-prev" title="Previous"><svg><use href="#i-prev"/></svg></button>
+        <button class="pl-play" id="pl-play" title="Play/Pause"><svg id="pl-playicon"><use href="#i-play"/></svg></button>
+        <button id="pl-next" title="Next"><svg><use href="#i-next"/></svg></button>
+        <button class="toggle" id="pl-repeat" title="Repeat"><svg><use href="#i-repeat"/></svg></button>
+      </div>
+      <div class="pl-seekwrap">
+        <span class="pl-time" id="pl-time">0:00</span>
+        <input type="range" class="pl-seek" id="pl-seek" min="0" max="1000" value="0">
+        <span class="pl-total" id="pl-total">0:00</span>
+      </div>
+      <div class="pl-volwrap">
+        <span class="pl-volicon"><svg><use href="#i-vol"/></svg></span>
+        <input type="range" class="pl-vol" id="pl-vol" min="0" max="100" value="60">
+      </div>
     </div>
   </div>
 </div>
@@ -443,18 +438,12 @@ function linkable(title,artist){const seen=new Set(),out=[];for(const s of[title
 
 // ---- state ----
 const chain=[];
-let forbiddenStem=null;
-let selected=null;
-let spotifyUser=null;
-
+let forbiddenStem=null, selected=null, spotifyUser=null;
 let sdkPlayer=null, sdkDeviceId=null, sdkReady=false, sdkPlaying=false, sdkCurrentUri=null;
-
-// player bar
-let playerVisible=false, playerCollapsed=false;
+let playerVisible=false;
 let posReported=0, posReportedAt=0, posDuration=0;
 let posTicker=null, userDraggingSeek=false;
-let shuffleOn=false, repeatOn=false;
-let advancing=false; // guard against double-fires on track-end
+let shuffleOn=false, repeatOn=false, advancing=false;
 
 const $=id=>document.getElementById(id);
 const titleEl=$("title"),artistEl=$("artist"),descEl=$("desc");
@@ -463,21 +452,20 @@ const esc=s=>String(s).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 
 // ---- Spotify session ----
 async function loadSpotifyUser(){
-  try{
-    const r=await fetch('/api/spotify-me');
-    spotifyUser=await r.json();
-  }catch(e){ spotifyUser={loggedIn:false}; }
+  try{ const r=await fetch('/api/spotify-me'); spotifyUser=await r.json(); }
+  catch(e){ spotifyUser={loggedIn:false}; }
   renderSpotifyBar();
   initWebPlaybackSDK();
 }
 function renderSpotifyBar(){
-  const bar=$("spotbar"),who=$("spotwho"),badge=$("spotbadge"),btn=$("spotbtn");
+  const bar=$("spotbar"),who=$("spotwho"),badge=$("spotbadge"),btn=$("spotbtn"),btntxt=$("spotbtntxt");
   if(spotifyUser?.loggedIn){
     bar.classList.add('on');
-    who.textContent=spotifyUser.displayName;
+    who.style.display='inline'; who.textContent=spotifyUser.displayName;
     badge.style.display=spotifyUser.product==='premium'?'inline-block':'none';
-    btn.innerHTML='<span>Sign out</span><svg><use href="#i-signout"/></svg>';
+    btn.innerHTML='<svg><use href="#i-signout"/></svg>';
     btn.classList.remove('primary');
+    btn.title='Sign out';
     btn.onclick=async()=>{
       await fetch('/api/spotify-logout',{method:'POST'});
       if(sdkPlayer){ try{ sdkPlayer.disconnect(); }catch(e){} sdkPlayer=null; sdkReady=false; sdkDeviceId=null; }
@@ -487,16 +475,17 @@ function renderSpotifyBar(){
     };
   }else{
     bar.classList.remove('on');
-    who.textContent='Not connected to Spotify';
+    who.style.display='none';
     badge.style.display='none';
-    btn.innerHTML='<svg><use href="#i-spot"/></svg><span>Connect Spotify</span>';
+    btn.innerHTML='<svg><use href="#i-spot"/></svg><span id="spotbtntxt">Connect</span>';
     btn.classList.add('primary');
+    btn.title='Connect Spotify';
     btn.onclick=()=>{ location.href='/api/spotify-login'; };
   }
   updateSaveButton();
 }
 
-// ---- Web Playback SDK ----
+// ---- SDK ----
 function initWebPlaybackSDK(){
   if(!spotifyUser?.loggedIn || spotifyUser.product!=='premium') return;
   if(sdkPlayer) return;
@@ -516,14 +505,8 @@ function initWebPlaybackSDK(){
       sdkPlaying=!state.paused;
       const uri=state.track_window?.current_track?.uri;
       if(uri) sdkCurrentUri=uri;
-      posReported=state.position;
-      posReportedAt=Date.now();
-      posDuration=state.duration||0;
-      // End-of-track detection: paused, position back near 0, and we were just playing.
-      // The SDK does this dance when a track ends and nothing else is queued.
-      if(wasPlaying && state.paused && state.position===0){
-        handleTrackEnded();
-      }
+      posReported=state.position; posReportedAt=Date.now(); posDuration=state.duration||0;
+      if(wasPlaying && state.paused && state.position===0) handleTrackEnded();
       renderChain(); renderPlayer();
     });
     sdkPlayer.addListener('initialization_error',e=>console.error('sdk init:',e));
@@ -549,25 +532,18 @@ async function playFullTrack(uri){
       body:JSON.stringify({ uris:[uri] }),
     });
     sdkCurrentUri=uri;
-    playerVisible=true; playerCollapsed=false;
+    playerVisible=true;
     renderPlayer();
   }catch(e){ console.error('play failed',e); }
 }
 
 // ---- Player bar ----
-function playerChainIndex(){
-  if(!sdkCurrentUri) return -1;
-  return chain.findIndex(c=>c.spotify?.uri===sdkCurrentUri);
-}
+function playerChainIndex(){ if(!sdkCurrentUri) return -1; return chain.findIndex(c=>c.spotify?.uri===sdkCurrentUri); }
 function currentPosition(){
   if(!sdkPlaying) return posReported;
   return Math.min(posReported + (Date.now()-posReportedAt), posDuration||0);
 }
-function fmtTime(ms){
-  if(!ms||ms<0) ms=0;
-  const s=Math.floor(ms/1000);
-  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
-}
+function fmtTime(ms){ if(!ms||ms<0) ms=0; const s=Math.floor(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
 function updatePosDisplay(){
   const pos=currentPosition();
   $("pl-time").textContent=fmtTime(pos);
@@ -580,9 +556,7 @@ function updatePosDisplay(){
 }
 function ensureTicker(){
   if(posTicker) return;
-  posTicker=setInterval(()=>{
-    if(playerVisible && sdkPlaying) updatePosDisplay();
-  },250);
+  posTicker=setInterval(()=>{ if(playerVisible && sdkPlaying) updatePosDisplay(); },250);
 }
 function renderPlayer(){
   const bar=$("player");
@@ -602,8 +576,6 @@ function renderPlayer(){
   if(art){ $("pl-art").src=art; $("pl-art").style.visibility='visible'; }
   else { $("pl-art").style.visibility='hidden'; }
   $("pl-playicon").innerHTML=`<use href="#${sdkPlaying?'i-pause':'i-play'}"/>`;
-  // shuffle/repeat can wrap so prev/next are only strictly disabled when
-  // we can't go anywhere at all.
   const canGo=chain.filter(c=>c.spotify?.uri).length>1;
   $("pl-prev").disabled=!canGo || (idx<=0 && !repeatOn && !shuffleOn);
   $("pl-next").disabled=!canGo || (idx>=chain.length-1 && !repeatOn && !shuffleOn);
@@ -613,8 +585,6 @@ function renderPlayer(){
   updatePosDisplay();
   ensureTicker();
 }
-
-// pick the next / previous URI given shuffle + repeat state
 function pickAdjacent(dir){
   const playable=chain.map((c,i)=>({i,uri:c.spotify?.uri})).filter(x=>x.uri);
   if(!playable.length) return null;
@@ -630,7 +600,6 @@ function pickAdjacent(dir){
   if(nextPos>=playable.length) nextPos = repeatOn ? 0 : -1;
   return nextPos>=0 ? playable[nextPos].uri : null;
 }
-
 async function handleTrackEnded(){
   if(advancing) return;
   advancing=true;
@@ -640,19 +609,15 @@ async function handleTrackEnded(){
     else { playerVisible=false; renderPlayer(); }
   } finally { setTimeout(()=>{advancing=false;},400); }
 }
-
-// wire up player controls
 $("pl-play").onclick=async()=>{
   if(!sdkPlayer) return;
-  try{ sdkPlaying ? await sdkPlayer.pause() : await sdkPlayer.resume(); }
-  catch(e){ console.error(e); }
+  try{ sdkPlaying ? await sdkPlayer.pause() : await sdkPlayer.resume(); } catch(e){ console.error(e); }
 };
 $("pl-prev").onclick=()=>{ const u=pickAdjacent(-1); if(u) playFullTrack(u); };
 $("pl-next").onclick=()=>{ const u=pickAdjacent(1); if(u) playFullTrack(u); };
 $("pl-shuffle").onclick=()=>{ shuffleOn=!shuffleOn; renderPlayer(); };
 $("pl-repeat").onclick=()=>{ repeatOn=!repeatOn; renderPlayer(); };
 $("pl-collapse").onclick=async()=>{
-  // TODO: expand into full-view player; for now, close.
   if(sdkPlayer){ try{ await sdkPlayer.pause(); }catch(e){} }
   playerVisible=false;
   renderPlayer(); renderChain();
@@ -676,7 +641,6 @@ async function commitSeek(){
 seek.addEventListener('mouseup',commitSeek);
 seek.addEventListener('touchend',commitSeek);
 seek.addEventListener('change',commitSeek);
-
 const vol=$("pl-vol");
 vol.addEventListener('input',()=>{
   vol.style.setProperty('--vpct',`${vol.value}%`);
@@ -688,21 +652,24 @@ vol.style.setProperty('--vpct','60%');
 // ---- chain views ----
 function renderChain(){
   const hist=$("history");
-  hist.innerHTML=chain.map((m,i)=>{
-    const img=m.spotify?.albumArt?`<img src="${esc(m.spotify.albumArt)}" alt="">`:'<div style="width:38px;height:38px;border-radius:6px;background:#0e0b1a;flex:0 0 auto"></div>';
-    const isCurrent=i===chain.length-1;
-    const linkMark=m.linkWord?` · <b>${esc(m.linkWord)}</b>`:'';
-    const seqPad=String(i+1).padStart(2,'0');
-    const linkIcon=i<chain.length-1?`<span class="hlink"><svg><use href="#i-chain"/></svg></span>`:'';
-    return `<div class="hcard ${isCurrent?'current':''}">
-      ${img}<div class="hbody">
-        <div class="hseq">#${seqPad}${linkMark}</div>
-        <div class="htitle">${esc(m.title)}</div>
-        <div class="hartist">${esc(m.artist)}</div>
-      </div>
-    </div>${linkIcon}`;
-  }).join('');
-  hist.scrollLeft=hist.scrollWidth;
+  if(!chain.length){
+    hist.innerHTML='<span class="hempty">no songs yet</span>';
+  } else {
+    hist.innerHTML=chain.map((m,i)=>{
+      const img=m.spotify?.albumArt?`<img src="${esc(m.spotify.albumArt)}" alt="">`:'<div style="width:30px;height:30px;border-radius:4px;background:#0e0b1a;flex:0 0 auto"></div>';
+      const isCurrent=i===chain.length-1;
+      const linkMark=m.linkWord?` · ${esc(m.linkWord)}`:'';
+      const linkIcon=i<chain.length-1?`<span class="hlink"><svg><use href="#i-chain"/></svg></span>`:'';
+      return `<div class="hcard ${isCurrent?'current':''}">
+        ${img}<div class="hbody">
+          <div class="hseq">#${String(i+1).padStart(2,'0')}${linkMark}</div>
+          <div class="htitle">${esc(m.title)}</div>
+          <div class="hartist">${esc(m.artist)}</div>
+        </div>
+      </div>${linkIcon}`;
+    }).join('');
+    hist.scrollLeft=hist.scrollWidth;
+  }
 
   const prev=$("prev");
   if(!chain.length){
@@ -729,18 +696,14 @@ function renderChain(){
     ${forbidDisplay?`<div class="pforbid">CANNOT REUSE <b>${esc(forbidDisplay)}</b></div>`:''}
     <div class="pctrl">
       ${hasPreview?`<button class="play" id="playbtn"><svg><use href="#i-play"/></svg>Preview</button>`:''}
-      ${canFull?`<button class="full ${fullIsThis?'playing':''}" id="fullbtn"><svg><use href="#i-eq"/></svg>${fullIsThis?'Playing full':'Play full'}</button>`:''}
-      ${openLink?`<a class="spot" href="${esc(openLink)}" target="_blank" rel="noopener"><svg><use href="#i-spot"/></svg>Open in Spotify</a>`:''}
-      ${!hasPreview&&!canFull&&!openLink?'<span class="noprev">no audio available</span>':''}
+      ${canFull?`<button class="full ${fullIsThis?'playing':''}" id="fullbtn"><svg><use href="#i-eq"/></svg>${fullIsThis?'Playing':'Play full'}</button>`:''}
+      ${openLink?`<a class="spot" href="${esc(openLink)}" target="_blank" rel="noopener"><svg><use href="#i-spot"/></svg>Spotify</a>`:''}
     </div>
   </div>`;
-  const pb=$("playbtn");
-  if(pb) pb.onclick=()=>togglePreview(last.spotify.previewUrl,pb);
-  const fb=$("fullbtn");
-  if(fb) fb.onclick=()=>playFullTrack(last.spotify.uri);
+  const pb=$("playbtn"); if(pb) pb.onclick=()=>togglePreview(last.spotify.previewUrl,pb);
+  const fb=$("fullbtn"); if(fb) fb.onclick=()=>playFullTrack(last.spotify.uri);
 }
 
-// ---- preview player ----
 function togglePreview(url,btn){
   if(audio.src===url && !audio.paused){
     audio.pause(); btn.innerHTML='<svg><use href="#i-play"/></svg>Preview'; return;
@@ -762,11 +725,10 @@ function autoPlayLatest(){
   }).catch(()=>{});
 }
 
-// ---- word picker ----
 function refreshWords(){
   const isOpening=chain.length===0;
   $("linkField").style.display=isOpening?'none':'flex';
-  $("turnText").textContent=isOpening?'Opening move':`Player ${(chain.length%4)+1}'s turn`;
+  $("turn").textContent=isOpening?'Opening move':`Player ${(chain.length%4)+1}'s turn`;
   $("goText").textContent=isOpening?'Start the chain':'Name this song';
   if(isOpening){validate();return;}
   const words=linkable(titleEl.value,artistEl.value);
@@ -774,7 +736,7 @@ function refreshWords(){
     const dead=forbiddenStem&&w.stem===forbiddenStem;
     const sel=selected&&selected.stem===w.stem;
     return `<span class="w ${dead?'dead':''} ${sel?'sel':''}" data-s="${w.stem}" data-d="${esc(w.display)}">${esc(w.display)}</span>`;
-  }).join(''):'';
+  }).join(''):'<span class="hint">Type your title &amp; artist to see linkable words.</span>';
   validate();
 }
 $("words").addEventListener("click",e=>{
@@ -782,7 +744,6 @@ $("words").addEventListener("click",e=>{
   selected={display:el.dataset.d,stem:el.dataset.s};refreshWords();
 });
 [titleEl,artistEl].forEach(el=>el.addEventListener("input",()=>{selected=null;refreshWords();}));
-
 function validate(){
   const hasSong=titleEl.value.trim()&&artistEl.value.trim();
   const ok=chain.length===0?hasSong:(hasSong&&selected);
@@ -805,15 +766,15 @@ async function submit(allowOverride){
   try{
     const r=await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     data=await r.json();
-  }catch(e){ showMsg('Network error — check connection and try again.','err'); validate(); return; }
+  }catch(e){ showMsg('Network error — try again.','err'); validate(); return; }
 
   if(!data.accepted){
     const reasons={
-      LINK_NOT_IN_PREVIOUS:"That word isn't in the previous song's title or artist.",
-      LINK_REUSES_FORBIDDEN_WORD:"You can't reuse the word that linked into the last song.",
-      LINK_NOT_IN_NEW_SONG:"That word isn't in the song you just named.",
-      SONG_NOT_FOUND:"We couldn't verify that song exists.",
-      VERIFY_UNAVAILABLE:"Couldn't reach the music database right now."
+      LINK_NOT_IN_PREVIOUS:"That word isn't in the previous song.",
+      LINK_REUSES_FORBIDDEN_WORD:"Can't reuse the word that linked into the last song.",
+      LINK_NOT_IN_NEW_SONG:"That word isn't in the song you named.",
+      SONG_NOT_FOUND:"Couldn't verify that song exists.",
+      VERIFY_UNAVAILABLE:"Couldn't reach the music database."
     };
     showMsg(reasons[data.reason]||'Move rejected.','err');
     if(data.needsOverride){ $("ovrbar").className="ovrbar show"; }
