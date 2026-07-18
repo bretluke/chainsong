@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chainsong</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Spline+Sans+Mono:wght@400;600&display=swap');
+
+  :root{
+    --bg:#0c0a14; --panel:#171327; --ink:#f4f0ff; --dim:#8a82a8;
+    --hot:#ff5d73; --lime:#c2f970; --violet:#9b6dff; --line:#2a2440;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(900px 500px at 80% -10%, rgba(155,109,255,.22), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(255,93,115,.15), transparent 55%),
+      var(--bg);
+    color:var(--ink); font-family:'Bricolage Grotesque',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:env(safe-area-inset-top) 0 0;
+  }
+  .wrap{max-width:540px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:18px 18px 30px}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  h1 .x{color:var(--hot)}
+  .tag{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
+
+  .chain{flex:1;overflow-y:auto;margin:14px 0;display:flex;flex-direction:column;gap:10px;padding-right:2px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;position:relative;animation:pop .35s cubic-bezier(.2,.9,.3,1.2)}
+  @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+  .card .seq{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
+  .card .ttl{font-size:18px;font-weight:700;margin-top:2px;line-height:1.2}
+  .card .art{font-size:13px;color:var(--dim);margin-top:3px}
+  .card .lnk{margin-top:8px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--lime)}
+  .card .lnk b{background:rgba(194,249,112,.13);padding:1px 6px;border-radius:5px}
+  .card.ovr{border-color:rgba(255,93,115,.5)}
+  .card.ovr .badge{position:absolute;top:10px;right:12px;font-size:9px;font-family:'Spline Sans Mono',monospace;color:var(--hot);text-transform:uppercase;letter-spacing:1px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+  label{display:block;font-family:'Spline Sans Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:0 0 6px 2px}
+  input{width:100%;background:#0e0b1a;border:1px solid var(--line);color:var(--ink);
+    font-family:'Bricolage Grotesque',sans-serif;font-size:16px;padding:13px 14px;border-radius:11px;outline:none}
+  input:focus{border-color:var(--violet)}
+  input::placeholder{color:#4a4366}
+  .row{margin-bottom:13px}
+  .hint{font-size:11px;color:var(--dim);margin:5px 2px 0;line-height:1.45}
+
+  .words{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .w{font-family:'Spline Sans Mono',monospace;font-size:13px;padding:9px 13px;border-radius:9px;
+    background:#0e0b1a;border:1px solid var(--line);color:var(--ink);cursor:pointer;transition:.15s}
+  .w:hover{border-color:var(--violet)}
+  .w.sel{background:var(--lime);color:#101010;border-color:var(--lime);font-weight:600}
+  .w.dead{opacity:.32;cursor:not-allowed;text-decoration:line-through}
+  .w.dead:hover{border-color:var(--line)}
+
+  button.go{width:100%;margin-top:16px;background:var(--hot);color:#fff;border:none;
+    font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:15px;border-radius:12px;cursor:pointer;letter-spacing:.3px}
+  button.go:disabled{background:#2a2440;color:#5a5278;cursor:not-allowed}
+  button.go:not(:disabled):active{transform:scale(.985)}
+
+  .msg{margin-top:12px;font-size:13px;padding:11px 13px;border-radius:10px;display:none;line-height:1.4}
+  .msg.err{display:block;background:rgba(255,93,115,.12);color:#ff97a6;border:1px solid rgba(255,93,115,.3)}
+  .msg.ok{display:block;background:rgba(194,249,112,.1);color:var(--lime);border:1px solid rgba(194,249,112,.3)}
+  .ovrbar{margin-top:12px;display:none;gap:8px}
+  .ovrbar.show{display:flex}
+  .ovrbar button{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e0b1a;color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer}
+  .ovrbar button.yes{border-color:var(--lime);color:var(--lime)}
+
+  .empty{text-align:center;color:var(--dim);padding:40px 20px;font-size:14px;line-height:1.6}
+  footer{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#4a4366;margin-top:14px;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Chain<span class="x">song</span></h1>
+    <span class="tag" id="turn">Opening move</span>
+  </header>
+
+  <div class="chain" id="chain">
+    <div class="empty" id="empty">
+      Name any song to start the chain.<br>
+      The next player must link a word from the<br>title or artist — but never the word that<br>linked into this one.
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <label>Song title</label>
+      <input id="title" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. The Power of Love">
+    </div>
+    <div class="row">
+      <label>Artist</label>
+      <input id="artist" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. Huey Lewis and the News">
+    </div>
+    <div class="row" id="hintRow">
+      <label>Describe it (a lyric, the year, the vibe — your call)</label>
+      <input id="desc" autocomplete="off" placeholder="optional — helps the table trust you weren't googling">
+    </div>
+
+    <div id="linkBlock" style="display:none">
+      <label>Which word links it to the song above?</label>
+      <div class="words" id="words"></div>
+    </div>
+
+    <button class="go" id="go" disabled>Name this song</button>
+    <div class="msg" id="msg"></div>
+    <div class="ovrbar" id="ovrbar">
+      <button id="ovrNo">It was wrong</button>
+      <button class="yes" id="ovrYes">Table says it's real — accept</button>
+    </div>
+  </div>
+
+  <footer>PASS &amp; PLAY · v0.1</footer>
+</div>
+
+<script type="module">
+// Inlined stop-word + stemmer so the picker matches the server exactly.
+const STOP=new Set(["a","an","the","i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
+function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
+const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
+function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
+ if(w.endsWith("ies")&&w.length>4)return w.slice(0,-3)+"y";
+ if(w.endsWith("ied")&&w.length>4)return w.slice(0,-3)+"y";
+ if(w.endsWith("es")&&w.length>4&&/(s|x|z|ch|sh)es$/.test(w))return w.slice(0,-2);
+ if(w.endsWith("ing")&&w.length>5){let b=w.slice(0,-3);if(/([bdfgklmnprt])\1$/.test(b))b=b.slice(0,-1);return b;}
+ if(w.endsWith("ed")&&w.length>4){let b=w.slice(0,-2);if(/([bdfgklmnprt])\1$/.test(b))b=b.slice(0,-1);return b;}
+ if(w.endsWith("iest")&&w.length>5)return w.slice(0,-4)+"y";
+ if(w.endsWith("ier")&&w.length>4)return w.slice(0,-3)+"y";
+ if(w.endsWith("est")&&w.length>5)return w.slice(0,-3);
+ if(w.endsWith("er")&&w.length>4)return w.slice(0,-2);
+ if(w.endsWith("ly")&&w.length>4)return w.slice(0,-2);
+ if(w.endsWith("s")&&!/(ss|us|is|os|as)$/.test(w)&&w.length>3)return w.slice(0,-1);
+ return w;}
+function linkable(title,artist){const seen=new Set(),out=[];for(const s of[title,artist])for(const tk of rawTokens(s)){if(STOP.has(tk)||tk.length<2)continue;const st=stem(tk);if(STOP.has(st)||seen.has(st))continue;seen.add(st);out.push({display:tk,stem:st});}return out;}
+
+const chain=[];           // [{title,artist,linkWord,linkStem,override}]
+let forbiddenStem=null;   // stem that linked INTO the last song
+let selected=null;        // chosen {display,stem}
+let pendingOverride=null; // payload awaiting table vote
+
+const $=id=>document.getElementById(id);
+const titleEl=$("title"),artistEl=$("artist"),descEl=$("desc");
+
+function renderChain(){
+  const c=$("chain");
+  if(!chain.length){c.innerHTML='';c.appendChild($("empty"));return;}
+  $("empty").remove?.();
+  c.innerHTML=chain.map((m,i)=>`
+    <div class="card ${m.override?'ovr':''}">
+      ${m.override?'<span class="badge">table call</span>':''}
+      <div class="seq">#${String(i+1).padStart(2,'0')}</div>
+      <div class="ttl">${esc(m.title)}</div>
+      <div class="art">${esc(m.artist)}</div>
+      ${m.linkWord?`<div class="lnk">linked on <b>${esc(m.linkWord)}</b></div>`:''}
+    </div>`).join('');
+  c.scrollTop=c.scrollHeight;
+}
+function esc(s){return s.replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]));}
+
+function refreshWords(){
+  const isOpening=chain.length===0;
+  $("linkBlock").style.display=isOpening?'none':'block';
+  $("turn").textContent=isOpening?'Opening move':`Player ${(chain.length%4)+1}'s turn`;
+  $("go").textContent=isOpening?'Start the chain':'Name this song';
+  if(isOpening){validate();return;}
+  const words=linkable(titleEl.value,artistEl.value);
+  $("words").innerHTML=words.length?words.map(w=>{
+    const dead=forbiddenStem&&w.stem===forbiddenStem;
+    const sel=selected&&selected.stem===w.stem;
+    return `<span class="w ${dead?'dead':''} ${sel?'sel':''}" data-s="${w.stem}" data-d="${esc(w.display)}">${esc(w.display)}</span>`;
+  }).join(''):'<span class="hint">Type a title &amp; artist above, then pick the linking word here.</span>';
+  validate();
+}
+$("words").addEventListener("click",e=>{
+  const el=e.target.closest('.w');if(!el||el.classList.contains('dead'))return;
+  selected={display:el.dataset.d,stem:el.dataset.s};refreshWords();
+});
+[titleEl,artistEl].forEach(el=>el.addEventListener("input",()=>{selected=null;refreshWords();}));
+
+function validate(){
+  const hasSong=titleEl.value.trim()&&artistEl.value.trim();
+  const ok=chain.length===0?hasSong:(hasSong&&selected);
+  $("go").disabled=!ok;
+}
+
+function showMsg(t,kind){const m=$("msg");m.textContent=t;m.className="msg "+kind;}
+function clearMsg(){$("msg").className="msg";$("ovrbar").className="ovrbar";}
+
+async function submit(allowOverride){
+  $("go").disabled=true;clearMsg();
+  const isOpening=chain.length===0;
+  const prev=isOpening?null:chain[chain.length-1];
+  const body={
+    prev:prev?{title:prev.title,artist:prev.artist}:null,
+    next:{title:titleEl.value.trim(),artist:artistEl.value.trim()},
+    linkWord:isOpening?'_':selected.display,
+    forbiddenStem,allowOverride:!!allowOverride
+  };
+  let data;
+  try{
+    const r=await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    data=await r.json();
+  }catch(e){ showMsg('Network error — check connection and try again.','err'); validate(); return; }
+
+  if(!data.accepted){
+    const reasons={
+      LINK_NOT_IN_PREVIOUS:"That word isn't in the previous song's title or artist.",
+      LINK_REUSES_FORBIDDEN_WORD:"You can't reuse the word that linked into the last song. Pick another.",
+      LINK_NOT_IN_NEW_SONG:"That word isn't in the song you just named.",
+      SONG_NOT_FOUND:"We couldn't verify that song exists.",
+      VERIFY_UNAVAILABLE:"Couldn't reach the music database right now."
+    };
+    showMsg(reasons[data.reason]||'Move rejected.','err');
+    if(data.needsOverride){
+      pendingOverride=true;$("ovrbar").className="ovrbar show";
+    }
+    validate();return;
+  }
+
+  chain.push({
+    title:data.canonicalTitle||body.next.title,
+    artist:data.canonicalArtist||body.next.artist,
+    linkWord:isOpening?null:selected.display,
+    linkStem:data.linkStem,override:!!data.override
+  });
+  forbiddenStem=data.linkStem;
+  selected=null;titleEl.value='';artistEl.value='';descEl.value='';
+  renderChain();refreshWords();
+  showMsg(data.override?'Accepted by table call.':'Linked! Pass the phone.','ok');
+  setTimeout(clearMsg,1800);
+}
+
+$("go").addEventListener("click",()=>submit(false));
+$("ovrYes").addEventListener("click",()=>{$("ovrbar").className="ovrbar";submit(true);});
+$("ovrNo").addEventListener("click",()=>{clearMsg();validate();});
+
+refreshWords();renderChain();
+</script>
+</body>
+</html>

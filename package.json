@@ -1,0 +1,12 @@
+{
+  "name": "chainsong",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The car song-chain game: link songs by a shared word, never reusing the link.",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.5"
+  }
+}
