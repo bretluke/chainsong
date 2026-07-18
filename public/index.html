@@ -19,57 +19,73 @@
       radial-gradient(700px 500px at -10% 110%, rgba(255,93,115,.15), transparent 55%),
       var(--bg);
     color:var(--ink); font-family:'Bricolage Grotesque',system-ui,sans-serif;
-    -webkit-font-smoothing:antialiased; padding:env(safe-area-inset-top) 0 0;
+    -webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   }
-  .wrap{max-width:540px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:18px 18px 30px}
-  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
-  h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .wrap{max-width:540px;margin:0 auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:12px}
+
+  header{display:flex;align-items:baseline;justify-content:space-between}
+  h1{font-size:24px;font-weight:800;letter-spacing:-.5px}
   h1 .x{color:var(--hot)}
   .tag{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
 
-  .chain{flex:1;overflow-y:auto;margin:14px 0;display:flex;flex-direction:column;gap:10px;padding-right:2px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;position:relative;animation:pop .35s cubic-bezier(.2,.9,.3,1.2)}
-  @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
-  .card .seq{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
-  .card .ttl{font-size:18px;font-weight:700;margin-top:2px;line-height:1.2}
-  .card .art{font-size:13px;color:var(--dim);margin-top:3px}
-  .card .lnk{margin-top:8px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--lime)}
-  .card .lnk b{background:rgba(194,249,112,.13);padding:1px 6px;border-radius:5px}
-  .card.ovr{border-color:rgba(255,93,115,.5)}
-  .card.ovr .badge{position:absolute;top:10px;right:12px;font-size:9px;font-family:'Spline Sans Mono',monospace;color:var(--hot);text-transform:uppercase;letter-spacing:1px}
+  /* History strip: compact, horizontally scrollable, shows the whole chain
+     without eating vertical space needed for the active turn. */
+  .history{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .history::-webkit-scrollbar{display:none}
+  .hcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:8px 11px;min-width:120px;max-width:180px}
+  .hcard .hseq{font-family:'Spline Sans Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1px}
+  .hcard .htitle{font-size:12px;font-weight:600;line-height:1.25;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hcard .hartist{font-size:10px;color:var(--dim);margin-top:1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+  /* THE previous song — the star of the screen while you're playing. */
+  .prev{background:linear-gradient(140deg, rgba(155,109,255,.16), rgba(255,93,115,.10));
+    border:1px solid rgba(155,109,255,.35);border-radius:18px;padding:16px 18px;position:relative}
+  .prev .plabel{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--violet);
+    text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+  .prev .ptitle{font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-.3px}
+  .prev .partist{font-size:14px;color:var(--dim);margin-top:4px}
+  .prev .pforbid{margin-top:10px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#ff97a6}
+  .prev .pforbid b{background:rgba(255,93,115,.15);padding:2px 7px;border-radius:5px}
+
+  /* Empty state (before opening move) uses the same slot as .prev */
+  .prev.empty{background:var(--panel);border-color:var(--line);text-align:center;padding:22px 18px}
+  .prev.empty .ptitle{font-size:16px;font-weight:600;color:var(--dim);letter-spacing:0}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
   label{display:block;font-family:'Spline Sans Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:0 0 6px 2px}
   input{width:100%;background:#0e0b1a;border:1px solid var(--line);color:var(--ink);
-    font-family:'Bricolage Grotesque',sans-serif;font-size:16px;padding:13px 14px;border-radius:11px;outline:none}
+    font-family:'Bricolage Grotesque',sans-serif;font-size:16px;padding:12px 14px;border-radius:11px;outline:none}
   input:focus{border-color:var(--violet)}
   input::placeholder{color:#4a4366}
-  .row{margin-bottom:13px}
+  .row{margin-bottom:11px}
   .hint{font-size:11px;color:var(--dim);margin:5px 2px 0;line-height:1.45}
 
-  .words{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-  .w{font-family:'Spline Sans Mono',monospace;font-size:13px;padding:9px 13px;border-radius:9px;
+  .words{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .w{font-family:'Spline Sans Mono',monospace;font-size:13px;padding:8px 12px;border-radius:9px;
     background:#0e0b1a;border:1px solid var(--line);color:var(--ink);cursor:pointer;transition:.15s}
   .w:hover{border-color:var(--violet)}
   .w.sel{background:var(--lime);color:#101010;border-color:var(--lime);font-weight:600}
   .w.dead{opacity:.32;cursor:not-allowed;text-decoration:line-through}
   .w.dead:hover{border-color:var(--line)}
 
-  button.go{width:100%;margin-top:16px;background:var(--hot);color:#fff;border:none;
-    font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:15px;border-radius:12px;cursor:pointer;letter-spacing:.3px}
+  button.go{width:100%;margin-top:14px;background:var(--hot);color:#fff;border:none;
+    font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;padding:14px;border-radius:12px;cursor:pointer;letter-spacing:.3px}
   button.go:disabled{background:#2a2440;color:#5a5278;cursor:not-allowed}
   button.go:not(:disabled):active{transform:scale(.985)}
 
-  .msg{margin-top:12px;font-size:13px;padding:11px 13px;border-radius:10px;display:none;line-height:1.4}
+  .msg{margin-top:11px;font-size:13px;padding:10px 13px;border-radius:10px;display:none;line-height:1.4}
   .msg.err{display:block;background:rgba(255,93,115,.12);color:#ff97a6;border:1px solid rgba(255,93,115,.3)}
   .msg.ok{display:block;background:rgba(194,249,112,.1);color:var(--lime);border:1px solid rgba(194,249,112,.3)}
-  .ovrbar{margin-top:12px;display:none;gap:8px}
+  .ovrbar{margin-top:11px;display:none;gap:8px}
   .ovrbar.show{display:flex}
   .ovrbar button{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e0b1a;color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer}
   .ovrbar button.yes{border-color:var(--lime);color:var(--lime)}
 
-  .empty{text-align:center;color:var(--dim);padding:40px 20px;font-size:14px;line-height:1.6}
-  footer{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#4a4366;margin-top:14px;letter-spacing:1px}
+  footer{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#4a4366;letter-spacing:1px}
 </style>
 </head>
 <body>
@@ -79,29 +95,30 @@
     <span class="tag" id="turn">Opening move</span>
   </header>
 
-  <div class="chain" id="chain">
-    <div class="empty" id="empty">
-      Name any song to start the chain.<br>
-      The next player must link a word from the<br>title or artist — but never the word that<br>linked into this one.
-    </div>
+  <!-- History strip: horizontal, compact, doesn't eat vertical space -->
+  <div class="history" id="history"></div>
+
+  <!-- The previous song — always visible above the input while playing -->
+  <div class="prev empty" id="prev">
+    <div class="ptitle">Name any song to start the chain</div>
   </div>
 
   <div class="panel">
     <div class="row">
-      <label>Song title</label>
-      <input id="title" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. The Power of Love">
+      <label>Your song — title</label>
+      <input id="title" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. I Will Always Love You">
     </div>
     <div class="row">
       <label>Artist</label>
-      <input id="artist" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. Huey Lewis and the News">
+      <input id="artist" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. Whitney Houston">
     </div>
     <div class="row" id="hintRow">
-      <label>Describe it (a lyric, the year, the vibe — your call)</label>
-      <input id="desc" autocomplete="off" placeholder="optional — helps the table trust you weren't googling">
+      <label>Describe it (a lyric, the year, the vibe — optional)</label>
+      <input id="desc" autocomplete="off" placeholder="helps the table trust you weren't googling">
     </div>
 
     <div id="linkBlock" style="display:none">
-      <label>Which word links it to the song above?</label>
+      <label>Which word links to the previous song?</label>
       <div class="words" id="words"></div>
     </div>
 
@@ -113,11 +130,12 @@
     </div>
   </div>
 
-  <footer>PASS &amp; PLAY · v0.1</footer>
+  <footer>PASS &amp; PLAY · v0.2</footer>
 </div>
 
 <script type="module">
-// Inlined stop-word + stemmer so the picker matches the server exactly.
+// Stop words + stemmer, mirrored from lib/wordlink.js so the client picker
+// matches server validation exactly.
 const STOP=new Set(["a","an","the","i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
 function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
 const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
@@ -136,29 +154,48 @@ function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
  return w;}
 function linkable(title,artist){const seen=new Set(),out=[];for(const s of[title,artist])for(const tk of rawTokens(s)){if(STOP.has(tk)||tk.length<2)continue;const st=stem(tk);if(STOP.has(st)||seen.has(st))continue;seen.add(st);out.push({display:tk,stem:st});}return out;}
 
-const chain=[];           // [{title,artist,linkWord,linkStem,override}]
-let forbiddenStem=null;   // stem that linked INTO the last song
-let selected=null;        // chosen {display,stem}
-let pendingOverride=null; // payload awaiting table vote
+const chain=[];
+let forbiddenStem=null;
+let selected=null;
 
 const $=id=>document.getElementById(id);
 const titleEl=$("title"),artistEl=$("artist"),descEl=$("desc");
+const esc=s=>String(s).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]));
 
+// Render both the history strip and the prominent "previous" card. These are
+// the two views of the chain: history is the whole timeline, prev is the one
+// song you're actively linking to.
 function renderChain(){
-  const c=$("chain");
-  if(!chain.length){c.innerHTML='';c.appendChild($("empty"));return;}
-  $("empty").remove?.();
-  c.innerHTML=chain.map((m,i)=>`
-    <div class="card ${m.override?'ovr':''}">
-      ${m.override?'<span class="badge">table call</span>':''}
-      <div class="seq">#${String(i+1).padStart(2,'0')}</div>
-      <div class="ttl">${esc(m.title)}</div>
-      <div class="art">${esc(m.artist)}</div>
-      ${m.linkWord?`<div class="lnk">linked on <b>${esc(m.linkWord)}</b></div>`:''}
+  const hist=$("history");
+  hist.innerHTML=chain.map((m,i)=>`
+    <div class="hcard">
+      <div class="hseq">#${String(i+1).padStart(2,'0')}${m.linkWord?' · '+esc(m.linkWord):''}</div>
+      <div class="htitle">${esc(m.title)}</div>
+      <div class="hartist">${esc(m.artist)}</div>
     </div>`).join('');
-  c.scrollTop=c.scrollHeight;
+  hist.scrollLeft=hist.scrollWidth;
+
+  const prev=$("prev");
+  if(!chain.length){
+    prev.className='prev empty';
+    prev.innerHTML='<div class="ptitle">Name any song to start the chain</div>';
+    return;
+  }
+  const last=chain[chain.length-1];
+  // Find the display form of the forbidden word to show the player.
+  let forbidDisplay=null;
+  if(forbiddenStem){
+    const w=linkable(last.title,last.artist).find(x=>x.stem===forbiddenStem);
+    forbidDisplay=w?w.display:null;
+  }
+  prev.className='prev';
+  prev.innerHTML=`
+    <div class="plabel">Link your song to</div>
+    <div class="ptitle">${esc(last.title)}</div>
+    <div class="partist">${esc(last.artist)}</div>
+    ${forbidDisplay?`<div class="pforbid">cannot reuse <b>${esc(forbidDisplay)}</b></div>`:''}
+  `;
 }
-function esc(s){return s.replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]));}
 
 function refreshWords(){
   const isOpening=chain.length===0;
@@ -171,7 +208,7 @@ function refreshWords(){
     const dead=forbiddenStem&&w.stem===forbiddenStem;
     const sel=selected&&selected.stem===w.stem;
     return `<span class="w ${dead?'dead':''} ${sel?'sel':''}" data-s="${w.stem}" data-d="${esc(w.display)}">${esc(w.display)}</span>`;
-  }).join(''):'<span class="hint">Type a title &amp; artist above, then pick the linking word here.</span>';
+  }).join(''):'<span class="hint">Type your title &amp; artist above, then pick the linking word here.</span>';
   validate();
 }
 $("words").addEventListener("click",e=>{
@@ -208,15 +245,13 @@ async function submit(allowOverride){
   if(!data.accepted){
     const reasons={
       LINK_NOT_IN_PREVIOUS:"That word isn't in the previous song's title or artist.",
-      LINK_REUSES_FORBIDDEN_WORD:"You can't reuse the word that linked into the last song. Pick another.",
+      LINK_REUSES_FORBIDDEN_WORD:"You can't reuse the word that linked into the last song.",
       LINK_NOT_IN_NEW_SONG:"That word isn't in the song you just named.",
       SONG_NOT_FOUND:"We couldn't verify that song exists.",
       VERIFY_UNAVAILABLE:"Couldn't reach the music database right now."
     };
     showMsg(reasons[data.reason]||'Move rejected.','err');
-    if(data.needsOverride){
-      pendingOverride=true;$("ovrbar").className="ovrbar show";
-    }
+    if(data.needsOverride){ $("ovrbar").className="ovrbar show"; }
     validate();return;
   }
 
@@ -237,7 +272,7 @@ $("go").addEventListener("click",()=>submit(false));
 $("ovrYes").addEventListener("click",()=>{$("ovrbar").className="ovrbar";submit(true);});
 $("ovrNo").addEventListener("click",()=>{clearMsg();validate();});
 
-refreshWords();renderChain();
+renderChain();refreshWords();
 </script>
 </body>
 </html>
