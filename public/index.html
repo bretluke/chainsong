@@ -73,6 +73,8 @@
     display:inline-flex;align-items:center;gap:5px}
   .prev .pctrl button.play{background:var(--lime);border-color:var(--lime);color:#101010;font-weight:700}
   .prev .pctrl button.play.playing{background:transparent;border-color:var(--lime);color:var(--lime)}
+  .prev .pctrl button.full{background:var(--spot);border-color:var(--spot);color:#000;font-weight:700}
+  .prev .pctrl button.full.playing{background:transparent;border-color:var(--spot);color:var(--spot)}
   .prev .pctrl a{background:var(--spot);border:1px solid var(--spot);color:#000;font-weight:600;
     border-radius:8px;padding:6px 10px;font-family:inherit;font-size:11px;text-decoration:none;
     display:inline-flex;align-items:center;gap:5px}
@@ -164,12 +166,19 @@
 
   <button class="savebtn" id="save">Save chain as Spotify playlist</button>
 
-  <footer>PASS &amp; PLAY · v0.3</footer>
+  <footer>PASS &amp; PLAY · v0.4</footer>
 </div>
 
 <audio id="audio" preload="auto"></audio>
 
-<script type="module">
+<!-- Spotify Web Playback SDK — full-track playback for Premium users on desktop.
+     Mobile Safari doesn't support the underlying browser APIs so it will
+     silently fail there; the preview and Open-in-Spotify buttons stay as
+     the mobile-friendly fallback. -->
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
+
+<script>
+// --- word logic mirrored from server ---
 const STOP=new Set(["a","an","the","i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
 function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
 const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
@@ -188,22 +197,32 @@ function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
  return w;}
 function linkable(title,artist){const seen=new Set(),out=[];for(const s of[title,artist])for(const tk of rawTokens(s)){if(STOP.has(tk)||tk.length<2)continue;const st=stem(tk);if(STOP.has(st)||seen.has(st))continue;seen.add(st);out.push({display:tk,stem:st});}return out;}
 
+// --- state ---
 const chain=[];
 let forbiddenStem=null;
 let selected=null;
 let spotifyUser=null;
+
+// Web Playback SDK state
+let sdkPlayer=null;
+let sdkDeviceId=null;
+let sdkReady=false;
+let sdkPlaying=false;    // is a full track currently playing?
+let sdkCurrentUri=null;  // which track URI is loaded in the SDK
 
 const $=id=>document.getElementById(id);
 const titleEl=$("title"),artistEl=$("artist"),descEl=$("desc");
 const audio=$("audio");
 const esc=s=>String(s).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]));
 
+// --- Spotify session ---
 async function loadSpotifyUser(){
   try{
     const r=await fetch('/api/spotify-me');
     spotifyUser=await r.json();
   }catch(e){ spotifyUser={loggedIn:false}; }
   renderSpotifyBar();
+  initWebPlaybackSDK();
 }
 function renderSpotifyBar(){
   const bar=$("spotbar"),who=$("spotwho"),btn=$("spotbtn");
@@ -212,7 +231,12 @@ function renderSpotifyBar(){
     const badge=spotifyUser.product==='premium'?' · Premium':'';
     who.textContent=`${spotifyUser.displayName}${badge}`;
     btn.textContent='Sign out'; btn.classList.remove('primary');
-    btn.onclick=async()=>{ await fetch('/api/spotify-logout',{method:'POST'}); spotifyUser={loggedIn:false}; renderSpotifyBar(); updateSaveButton(); };
+    btn.onclick=async()=>{
+      await fetch('/api/spotify-logout',{method:'POST'});
+      // Disconnect the SDK too so it doesn't keep an authenticated session.
+      if(sdkPlayer){ try{ sdkPlayer.disconnect(); }catch(e){} sdkPlayer=null; sdkReady=false; sdkDeviceId=null; }
+      spotifyUser={loggedIn:false}; renderSpotifyBar(); updateSaveButton(); renderChain();
+    };
   }else{
     bar.classList.remove('on');
     who.textContent='Not connected to Spotify';
@@ -222,6 +246,72 @@ function renderSpotifyBar(){
   updateSaveButton();
 }
 
+// --- Web Playback SDK init ---
+function initWebPlaybackSDK(){
+  // Only Premium users can use the SDK — free accounts get account_error.
+  if(!spotifyUser?.loggedIn || spotifyUser.product!=='premium') return;
+  if(sdkPlayer) return; // already initialized
+
+  const buildPlayer=()=>{
+    sdkPlayer=new Spotify.Player({
+      name:'Chainsong',
+      volume:0.6,
+      // Called by the SDK whenever it needs a fresh token — we re-hit
+      // /api/spotify-me which handles refresh server-side.
+      getOAuthToken:async(cb)=>{
+        try{
+          const r=await fetch('/api/spotify-me');
+          const d=await r.json();
+          if(d.loggedIn) cb(d.accessToken);
+        }catch(e){ console.error('SDK token fetch failed',e); }
+      },
+    });
+
+    sdkPlayer.addListener('ready',({device_id})=>{
+      sdkDeviceId=device_id; sdkReady=true; renderChain();
+    });
+    sdkPlayer.addListener('not_ready',()=>{ sdkReady=false; renderChain(); });
+    sdkPlayer.addListener('player_state_changed',(state)=>{
+      if(!state){ sdkPlaying=false; renderChain(); return; }
+      sdkPlaying=!state.paused;
+      const uri=state.track_window?.current_track?.uri;
+      if(uri) sdkCurrentUri=uri;
+      renderChain();
+    });
+    sdkPlayer.addListener('initialization_error',e=>console.error('sdk init:',e));
+    sdkPlayer.addListener('authentication_error',e=>console.error('sdk auth:',e));
+    sdkPlayer.addListener('account_error',e=>{ console.error('sdk needs Premium:',e); sdkReady=false; renderChain(); });
+
+    sdkPlayer.connect();
+  };
+
+  // The SDK sets a global callback when its script has parsed. If it's
+  // already loaded (loadSpotifyUser is async so this is likely), build now.
+  if(window.Spotify){ buildPlayer(); }
+  else { window.onSpotifyWebPlaybackSDKReady=buildPlayer; }
+}
+
+async function playFullTrack(uri){
+  if(!sdkReady || !sdkDeviceId) return;
+  // Pause the 30s preview so two audio sources don't overlap.
+  audio.pause();
+  try{
+    // If this URI is already loaded, toggle play/pause instead of restarting.
+    if(sdkCurrentUri===uri && sdkPlaying){ await sdkPlayer.pause(); return; }
+    if(sdkCurrentUri===uri && !sdkPlaying){ await sdkPlayer.resume(); return; }
+
+    const me=await(await fetch('/api/spotify-me')).json();
+    if(!me.loggedIn) return;
+    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${sdkDeviceId}`,{
+      method:'PUT',
+      headers:{ Authorization:`Bearer ${me.accessToken}`, 'Content-Type':'application/json' },
+      body:JSON.stringify({ uris:[uri] }),
+    });
+    sdkCurrentUri=uri;
+  }catch(e){ console.error('play failed',e); }
+}
+
+// --- render chain views ---
 function renderChain(){
   const hist=$("history");
   hist.innerHTML=chain.map((m,i)=>{
@@ -249,6 +339,8 @@ function renderChain(){
   const art=last.spotify?.albumArt?`<img src="${esc(last.spotify.albumArt)}" alt="">`:'';
   const hasPreview=!!last.spotify?.previewUrl;
   const openLink=last.spotify?.externalUrl;
+  const canFull=sdkReady && !!last.spotify?.uri;
+  const fullIsThis=sdkCurrentUri===last.spotify?.uri && sdkPlaying;
   prev.className='prev';
   prev.innerHTML=`${art}<div class="pbody">
     <div class="plabel">Link your song to</div>
@@ -257,14 +349,18 @@ function renderChain(){
     ${forbidDisplay?`<div class="pforbid">cannot reuse <b>${esc(forbidDisplay)}</b></div>`:''}
     <div class="pctrl">
       ${hasPreview?`<button class="play" id="playbtn">▶ Preview</button>`:''}
+      ${canFull?`<button class="full ${fullIsThis?'playing':''}" id="fullbtn">${fullIsThis?'⏸ Playing full':'▶ Play full'}</button>`:''}
       ${openLink?`<a href="${esc(openLink)}" target="_blank" rel="noopener">Open in Spotify ↗</a>`:''}
-      ${!hasPreview&&!openLink?'<span class="noprev">no audio available</span>':''}
+      ${!hasPreview&&!canFull&&!openLink?'<span class="noprev">no audio available</span>':''}
     </div>
   </div>`;
   const pb=$("playbtn");
   if(pb) pb.onclick=()=>togglePreview(last.spotify.previewUrl,pb);
+  const fb=$("fullbtn");
+  if(fb) fb.onclick=()=>playFullTrack(last.spotify.uri);
 }
 
+// --- preview player ---
 function togglePreview(url,btn){
   if(audio.src===url && !audio.paused){
     audio.pause();
@@ -272,6 +368,8 @@ function togglePreview(url,btn){
     btn.textContent='▶ Preview';
     return;
   }
+  // Pause SDK if it's playing so audio doesn't double up.
+  if(sdkPlaying && sdkPlayer){ try{ sdkPlayer.pause(); }catch(e){} }
   audio.src=url;
   audio.play().then(()=>{
     btn.classList.add('playing');
@@ -285,12 +383,15 @@ audio.addEventListener('ended',()=>{
 function autoPlayLatest(){
   const last=chain[chain.length-1];
   if(!last?.spotify?.previewUrl) return;
+  // Don't stomp on an in-progress full-track playback.
+  if(sdkPlaying) return;
   audio.src=last.spotify.previewUrl;
   audio.play().then(()=>{
     const pb=$("playbtn"); if(pb){ pb.classList.add('playing'); pb.textContent='⏸ Playing'; }
   }).catch(()=>{ /* autoplay blocked; the play button still works */ });
 }
 
+// --- word picker ---
 function refreshWords(){
   const isOpening=chain.length===0;
   $("linkBlock").style.display=isOpening?'none':'block';
