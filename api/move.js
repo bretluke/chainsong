@@ -1,42 +1,37 @@
 /**
- * /api/move — submit one move (Vercel serverless function).
+ * /api/move — submit one move.
  *
  * Flow (the "hybrid" model):
- *   1. client sends prev song, new song, chosen link word, forbidden stem
- *   2. validate the link with pure logic (wordlink.validateMove)
- *   3. ONLY IF the link is structurally valid, verify the new song exists
- *      (verify.verifySong against MusicBrainz, cached in Neon)
- *   4. if MB can't confirm, return needsOverride so the group can vote to
- *      accept an obscure-but-real song instead of hard-failing
+ *   1. structural link validation (pure logic, no network)
+ *   2. verify the song exists via MusicBrainz (cached in Neon)
+ *   3. best-effort Spotify lookup for preview + track URI
  *
- * No verification ever happens before submit, so this can't act as search.
+ * Steps 1 and 2 gate acceptance. Step 3 is decorative — if Spotify is
+ * down or the track isn't findable there, the move still succeeds; the
+ * client just won't get preview audio for that song.
  */
 
 const { validateMove, stem, rawTokens } = require('../lib/wordlink');
 const { verifySong } = require('../lib/verify');
+const { searchTrack } = require('../lib/spotify');
 const { Client } = require('pg');
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'POST only' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const { prev, next, linkWord, forbiddenStem, allowOverride } = req.body || {};
 
   if (!next?.title || !next?.artist || !linkWord) {
     return res.status(400).json({ error: 'next.title, next.artist, linkWord required' });
   }
 
-  // Opening move: no previous song, no link needed.
   const isOpening = !prev?.title;
 
   if (!isOpening) {
     const v = validateMove(prev, next, linkWord, forbiddenStem || null);
-    if (!v.ok) {
-      return res.status(200).json({ accepted: false, reason: v.reason });
-    }
+    if (!v.ok) return res.status(200).json({ accepted: false, reason: v.reason });
   }
 
-  // Structural link is fine — now (and only now) verify the song is real.
+  // Verify existence via MusicBrainz (cached).
   const db = new Client({ connectionString: process.env.DATABASE_URL });
   let verification;
   try {
@@ -50,11 +45,15 @@ module.exports = async function handler(req, res) {
 
   if (!verification.found) {
     if (allowOverride) {
-      // group has voted to accept an obscure/real song MB didn't return
+      // Group vote: accept anyway. Still try to find it on Spotify for media.
+      const spotify = await searchTrack(next.title, next.artist);
       return res.status(200).json({
         accepted: true,
         override: true,
         linkStem: isOpening ? null : stem(rawTokens(linkWord)[0] || ''),
+        canonicalTitle: next.title,
+        canonicalArtist: next.artist,
+        spotify,
       });
     }
     return res.status(200).json({
@@ -64,10 +63,18 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  // MusicBrainz confirmed. Get Spotify data as a bonus (best-effort).
+  // Use the canonical names — Spotify's search does better with clean strings.
+  const spotify = await searchTrack(
+    verification.canonicalTitle || next.title,
+    verification.canonicalArtist || next.artist,
+  );
+
   return res.status(200).json({
     accepted: true,
     canonicalTitle: verification.canonicalTitle,
     canonicalArtist: verification.canonicalArtist,
     linkStem: isOpening ? null : stem(rawTokens(linkWord)[0] || ''),
+    spotify,
   });
 };

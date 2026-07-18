@@ -10,6 +10,7 @@
   :root{
     --bg:#0c0a14; --panel:#171327; --ink:#f4f0ff; --dim:#8a82a8;
     --hot:#ff5d73; --lime:#c2f970; --violet:#9b6dff; --line:#2a2440;
+    --spot:#1db954;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -24,36 +25,58 @@
   }
   .wrap{max-width:540px;margin:0 auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:12px}
 
-  header{display:flex;align-items:baseline;justify-content:space-between}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px}
   h1{font-size:24px;font-weight:800;letter-spacing:-.5px}
   h1 .x{color:var(--hot)}
   .tag{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
 
-  /* History strip: compact, horizontally scrollable, shows the whole chain
-     without eating vertical space needed for the active turn. */
+  .spotbar{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
+    border-radius:11px;padding:8px 12px;font-size:12px}
+  .spotbar .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .spotbar.on .dot{background:var(--spot)}
+  .spotbar .who{flex:1;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .spotbar.on .who{color:var(--ink)}
+  .spotbar button{background:transparent;border:1px solid var(--line);color:var(--ink);
+    padding:6px 11px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer}
+  .spotbar button.primary{background:var(--spot);border-color:var(--spot);color:#000;font-weight:600}
+
   .history{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
   .history::-webkit-scrollbar{display:none}
   .hcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:8px 11px;min-width:120px;max-width:180px}
+    padding:8px 11px;min-width:140px;max-width:200px;display:flex;gap:8px;align-items:center}
+  .hcard img{width:32px;height:32px;border-radius:5px;object-fit:cover;flex:0 0 auto}
+  .hcard .hbody{min-width:0;flex:1}
   .hcard .hseq{font-family:'Spline Sans Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1px}
-  .hcard .htitle{font-size:12px;font-weight:600;line-height:1.25;margin-top:2px;
+  .hcard .htitle{font-size:12px;font-weight:600;line-height:1.25;margin-top:1px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .hcard .hartist{font-size:10px;color:var(--dim);margin-top:1px;
+  .hcard .hartist{font-size:10px;color:var(--dim);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  /* THE previous song — the star of the screen while you're playing. */
   .prev{background:linear-gradient(140deg, rgba(155,109,255,.16), rgba(255,93,115,.10));
-    border:1px solid rgba(155,109,255,.35);border-radius:18px;padding:16px 18px;position:relative}
+    border:1px solid rgba(155,109,255,.35);border-radius:18px;padding:16px 18px;position:relative;
+    display:flex;gap:14px;align-items:center}
+  .prev.empty{background:var(--panel);border-color:var(--line);text-align:center;padding:22px 18px;display:block}
+  .prev img{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:0 0 auto;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  .prev .pbody{flex:1;min-width:0}
   .prev .plabel{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--violet);
-    text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
-  .prev .ptitle{font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-.3px}
-  .prev .partist{font-size:14px;color:var(--dim);margin-top:4px}
-  .prev .pforbid{margin-top:10px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#ff97a6}
+    text-transform:uppercase;letter-spacing:2px;margin-bottom:4px}
+  .prev .ptitle{font-size:20px;font-weight:800;line-height:1.15;letter-spacing:-.3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prev .partist{font-size:13px;color:var(--dim);margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prev .pforbid{margin-top:8px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:#ff97a6}
   .prev .pforbid b{background:rgba(255,93,115,.15);padding:2px 7px;border-radius:5px}
-
-  /* Empty state (before opening move) uses the same slot as .prev */
-  .prev.empty{background:var(--panel);border-color:var(--line);text-align:center;padding:22px 18px}
   .prev.empty .ptitle{font-size:16px;font-weight:600;color:var(--dim);letter-spacing:0}
+  .prev .pctrl{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .prev .pctrl button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+    color:var(--ink);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:11px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px}
+  .prev .pctrl button.play{background:var(--lime);border-color:var(--lime);color:#101010;font-weight:700}
+  .prev .pctrl button.play.playing{background:transparent;border-color:var(--lime);color:var(--lime)}
+  .prev .pctrl a{background:var(--spot);border:1px solid var(--spot);color:#000;font-weight:600;
+    border-radius:8px;padding:6px 10px;font-family:inherit;font-size:11px;text-decoration:none;
+    display:inline-flex;align-items:center;gap:5px}
+  .prev .noprev{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--dim);margin-top:8px}
 
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
   label{display:block;font-family:'Spline Sans Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:0 0 6px 2px}
@@ -85,6 +108,11 @@
   .ovrbar button{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e0b1a;color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer}
   .ovrbar button.yes{border-color:var(--lime);color:var(--lime)}
 
+  .savebtn{width:100%;background:var(--spot);color:#000;border:none;font-family:inherit;font-weight:700;
+    font-size:14px;padding:13px;border-radius:12px;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px}
+  .savebtn.show{display:flex}
+  .savebtn:disabled{opacity:.6;cursor:wait}
+
   footer{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#4a4366;letter-spacing:1px}
 </style>
 </head>
@@ -95,10 +123,14 @@
     <span class="tag" id="turn">Opening move</span>
   </header>
 
-  <!-- History strip: horizontal, compact, doesn't eat vertical space -->
+  <div class="spotbar" id="spotbar">
+    <span class="dot"></span>
+    <span class="who" id="spotwho">Not connected to Spotify</span>
+    <button id="spotbtn" class="primary">Connect Spotify</button>
+  </div>
+
   <div class="history" id="history"></div>
 
-  <!-- The previous song — always visible above the input while playing -->
   <div class="prev empty" id="prev">
     <div class="ptitle">Name any song to start the chain</div>
   </div>
@@ -112,7 +144,7 @@
       <label>Artist</label>
       <input id="artist" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="e.g. Whitney Houston">
     </div>
-    <div class="row" id="hintRow">
+    <div class="row">
       <label>Describe it (a lyric, the year, the vibe — optional)</label>
       <input id="desc" autocomplete="off" placeholder="helps the table trust you weren't googling">
     </div>
@@ -130,12 +162,14 @@
     </div>
   </div>
 
-  <footer>PASS &amp; PLAY · v0.2</footer>
+  <button class="savebtn" id="save">Save chain as Spotify playlist</button>
+
+  <footer>PASS &amp; PLAY · v0.3</footer>
 </div>
 
+<audio id="audio" preload="auto"></audio>
+
 <script type="module">
-// Stop words + stemmer, mirrored from lib/wordlink.js so the client picker
-// matches server validation exactly.
 const STOP=new Set(["a","an","the","i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
 function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
 const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
@@ -157,22 +191,47 @@ function linkable(title,artist){const seen=new Set(),out=[];for(const s of[title
 const chain=[];
 let forbiddenStem=null;
 let selected=null;
+let spotifyUser=null;
 
 const $=id=>document.getElementById(id);
 const titleEl=$("title"),artistEl=$("artist"),descEl=$("desc");
+const audio=$("audio");
 const esc=s=>String(s).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]));
 
-// Render both the history strip and the prominent "previous" card. These are
-// the two views of the chain: history is the whole timeline, prev is the one
-// song you're actively linking to.
+async function loadSpotifyUser(){
+  try{
+    const r=await fetch('/api/spotify-me');
+    spotifyUser=await r.json();
+  }catch(e){ spotifyUser={loggedIn:false}; }
+  renderSpotifyBar();
+}
+function renderSpotifyBar(){
+  const bar=$("spotbar"),who=$("spotwho"),btn=$("spotbtn");
+  if(spotifyUser?.loggedIn){
+    bar.classList.add('on');
+    const badge=spotifyUser.product==='premium'?' · Premium':'';
+    who.textContent=`${spotifyUser.displayName}${badge}`;
+    btn.textContent='Sign out'; btn.classList.remove('primary');
+    btn.onclick=async()=>{ await fetch('/api/spotify-logout',{method:'POST'}); spotifyUser={loggedIn:false}; renderSpotifyBar(); updateSaveButton(); };
+  }else{
+    bar.classList.remove('on');
+    who.textContent='Not connected to Spotify';
+    btn.textContent='Connect Spotify'; btn.classList.add('primary');
+    btn.onclick=()=>{ location.href='/api/spotify-login'; };
+  }
+  updateSaveButton();
+}
+
 function renderChain(){
   const hist=$("history");
-  hist.innerHTML=chain.map((m,i)=>`
-    <div class="hcard">
+  hist.innerHTML=chain.map((m,i)=>{
+    const img=m.spotify?.albumArt?`<img src="${esc(m.spotify.albumArt)}" alt="">`:'';
+    return `<div class="hcard">${img}<div class="hbody">
       <div class="hseq">#${String(i+1).padStart(2,'0')}${m.linkWord?' · '+esc(m.linkWord):''}</div>
       <div class="htitle">${esc(m.title)}</div>
       <div class="hartist">${esc(m.artist)}</div>
-    </div>`).join('');
+    </div></div>`;
+  }).join('');
   hist.scrollLeft=hist.scrollWidth;
 
   const prev=$("prev");
@@ -182,19 +241,54 @@ function renderChain(){
     return;
   }
   const last=chain[chain.length-1];
-  // Find the display form of the forbidden word to show the player.
   let forbidDisplay=null;
   if(forbiddenStem){
     const w=linkable(last.title,last.artist).find(x=>x.stem===forbiddenStem);
     forbidDisplay=w?w.display:null;
   }
+  const art=last.spotify?.albumArt?`<img src="${esc(last.spotify.albumArt)}" alt="">`:'';
+  const hasPreview=!!last.spotify?.previewUrl;
+  const openLink=last.spotify?.externalUrl;
   prev.className='prev';
-  prev.innerHTML=`
+  prev.innerHTML=`${art}<div class="pbody">
     <div class="plabel">Link your song to</div>
     <div class="ptitle">${esc(last.title)}</div>
     <div class="partist">${esc(last.artist)}</div>
     ${forbidDisplay?`<div class="pforbid">cannot reuse <b>${esc(forbidDisplay)}</b></div>`:''}
-  `;
+    <div class="pctrl">
+      ${hasPreview?`<button class="play" id="playbtn">▶ Preview</button>`:''}
+      ${openLink?`<a href="${esc(openLink)}" target="_blank" rel="noopener">Open in Spotify ↗</a>`:''}
+      ${!hasPreview&&!openLink?'<span class="noprev">no audio available</span>':''}
+    </div>
+  </div>`;
+  const pb=$("playbtn");
+  if(pb) pb.onclick=()=>togglePreview(last.spotify.previewUrl,pb);
+}
+
+function togglePreview(url,btn){
+  if(audio.src===url && !audio.paused){
+    audio.pause();
+    btn.classList.remove('playing');
+    btn.textContent='▶ Preview';
+    return;
+  }
+  audio.src=url;
+  audio.play().then(()=>{
+    btn.classList.add('playing');
+    btn.textContent='⏸ Playing';
+  }).catch(()=>{ btn.textContent='▶ Preview'; });
+}
+audio.addEventListener('ended',()=>{
+  const pb=$("playbtn"); if(pb){ pb.classList.remove('playing'); pb.textContent='▶ Preview'; }
+});
+
+function autoPlayLatest(){
+  const last=chain[chain.length-1];
+  if(!last?.spotify?.previewUrl) return;
+  audio.src=last.spotify.previewUrl;
+  audio.play().then(()=>{
+    const pb=$("playbtn"); if(pb){ pb.classList.add('playing'); pb.textContent='⏸ Playing'; }
+  }).catch(()=>{ /* autoplay blocked; the play button still works */ });
 }
 
 function refreshWords(){
@@ -222,7 +316,6 @@ function validate(){
   const ok=chain.length===0?hasSong:(hasSong&&selected);
   $("go").disabled=!ok;
 }
-
 function showMsg(t,kind){const m=$("msg");m.textContent=t;m.className="msg "+kind;}
 function clearMsg(){$("msg").className="msg";$("ovrbar").className="ovrbar";}
 
@@ -259,11 +352,13 @@ async function submit(allowOverride){
     title:data.canonicalTitle||body.next.title,
     artist:data.canonicalArtist||body.next.artist,
     linkWord:isOpening?null:selected.display,
-    linkStem:data.linkStem,override:!!data.override
+    linkStem:data.linkStem,override:!!data.override,
+    spotify:data.spotify||null
   });
   forbiddenStem=data.linkStem;
   selected=null;titleEl.value='';artistEl.value='';descEl.value='';
-  renderChain();refreshWords();
+  renderChain();refreshWords();updateSaveButton();
+  autoPlayLatest();
   showMsg(data.override?'Accepted by table call.':'Linked! Pass the phone.','ok');
   setTimeout(clearMsg,1800);
 }
@@ -272,6 +367,41 @@ $("go").addEventListener("click",()=>submit(false));
 $("ovrYes").addEventListener("click",()=>{$("ovrbar").className="ovrbar";submit(true);});
 $("ovrNo").addEventListener("click",()=>{clearMsg();validate();});
 
+function updateSaveButton(){
+  const btn=$("save");
+  const eligible=spotifyUser?.loggedIn && chain.length>=2 &&
+                 chain.some(c=>c.spotify?.uri);
+  btn.classList.toggle('show',!!eligible);
+}
+$("save").addEventListener("click",async()=>{
+  const btn=$("save"); btn.disabled=true;
+  const trackUris=chain.map(c=>c.spotify?.uri).filter(Boolean);
+  const name=`Chainsong — ${new Date().toLocaleDateString()}`;
+  try{
+    const r=await fetch('/api/spotify-playlist',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,trackUris})});
+    const data=await r.json();
+    if(data.url){
+      btn.textContent='✓ Playlist saved — open';
+      btn.onclick=()=>window.open(data.url,'_blank');
+    } else {
+      btn.textContent='Save failed — try again';
+    }
+  }catch(e){ btn.textContent='Save failed — try again'; }
+  btn.disabled=false;
+});
+
+const urlParams=new URLSearchParams(location.search);
+const spotResult=urlParams.get('spotify');
+if(spotResult){
+  history.replaceState({},'',location.pathname);
+  if(spotResult!=='ok'){
+    setTimeout(()=>showMsg("Couldn't connect Spotify. Try again?",'err'),300);
+  }
+}
+
+loadSpotifyUser();
 renderChain();refreshWords();
 </script>
 </body>
