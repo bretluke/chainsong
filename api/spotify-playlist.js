@@ -45,7 +45,7 @@ module.exports = async function handler(req, res) {
       accessToken,
       me.id,
       name,
-      'Created by Chainsong — the word-linking song game.',
+      'Created by Chainsong - the word-linking song game.',
       trackUris.filter(Boolean),
     );
     res.status(200).json({ url: playlist.url });

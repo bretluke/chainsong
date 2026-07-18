@@ -376,7 +376,7 @@ function updateSaveButton(){
 $("save").addEventListener("click",async()=>{
   const btn=$("save"); btn.disabled=true;
   const trackUris=chain.map(c=>c.spotify?.uri).filter(Boolean);
-  const name=`Chainsong — ${new Date().toLocaleDateString()}`;
+  const name=`Chainsong - ${new Date().toLocaleDateString()}`;
   try{
     const r=await fetch('/api/spotify-playlist',{method:'POST',
       headers:{'Content-Type':'application/json'},
