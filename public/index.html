@@ -415,7 +415,10 @@
 <script>
 // ---- word logic mirrored from server ----
 const STOP=new Set(["a","an","the","i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
-function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
+// Collapse dotted acronyms (P.O.D. → pod, R.E.M. → rem) BEFORE the punctuation
+// strip runs, otherwise the dots become spaces and the single letters get
+// filtered out by the min-length rule, leaving the acronym unusable.
+function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/\b([a-z](?:\.[a-z])+)\.?/g,m=>m.replace(/\./g,"")).replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
 const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
 function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
  if(w.endsWith("ies")&&w.length>4)return w.slice(0,-3)+"y";
@@ -749,11 +752,6 @@ function autoPlayLatest(){
   }).catch(()=>{});
 }
 
-// The word picker shows EVERY linkable word from the previous song and
-// crosses out ones the player can't use: either forbidden (used to link
-// into this song) or not present in the song the player is naming right
-// now. If a previously-picked word becomes ineligible mid-edit, unselect
-// it so the submit button reflects reality.
 function refreshWords(){
   const isOpening=chain.length===0;
   $("linkField").style.display=isOpening?'none':'flex';
