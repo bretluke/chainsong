@@ -128,7 +128,7 @@
     background:rgba(255,255,255,.04);border:1px solid var(--line-2);color:var(--ink);cursor:pointer;transition:.15s;line-height:1}
   .w:hover{border-color:var(--violet)}
   .w.sel{background:var(--lime);color:#101010;border-color:var(--lime);font-weight:700}
-  .w.dead{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+  .w.dead{opacity:.28;cursor:not-allowed;text-decoration:line-through}
   .w.dead:hover{border-color:var(--line-2)}
 
   button.go{width:100%;margin-top:10px;background:transparent;color:var(--dimmer);
@@ -143,11 +143,6 @@
   .msg{margin-top:8px;font-size:12px;padding:8px 11px;border-radius:8px;display:none;line-height:1.4}
   .msg.err{display:block;background:rgba(255,93,115,.12);color:#ff97a6;border:1px solid rgba(255,93,115,.3)}
   .msg.ok{display:block;background:rgba(194,249,112,.1);color:var(--lime);border:1px solid rgba(194,249,112,.3)}
-  .ovrbar{margin-top:8px;display:none;gap:8px}
-  .ovrbar.show{display:flex}
-  .ovrbar button{flex:1;padding:9px;border-radius:8px;border:1px solid var(--line-2);
-    background:transparent;color:var(--ink);font-family:inherit;font-size:12px;cursor:pointer}
-  .ovrbar button.yes{border-color:var(--lime);color:var(--lime)}
 
   .savebtn{width:100%;background:var(--lime);color:#101010;border:none;font-family:inherit;font-weight:700;
     font-size:13px;padding:10px;border-radius:10px;cursor:pointer;display:none;
@@ -156,7 +151,6 @@
   .savebtn svg{width:15px;height:15px}
   .savebtn:disabled{opacity:.6;cursor:wait}
 
-  /* --- sticky, persistent player bar --- */
   .player{
     position:fixed;bottom:0;left:0;right:0;
     background:var(--bg-2);
@@ -375,10 +369,6 @@
       <svg><use href="#i-arrow"/></svg>
     </button>
     <div class="msg" id="msg"></div>
-    <div class="ovrbar" id="ovrbar">
-      <button id="ovrNo">It was wrong</button>
-      <button class="yes" id="ovrYes">Table says it's real — accept</button>
-    </div>
   </div>
 
   <button class="savebtn" id="save">
@@ -446,7 +436,6 @@ function linkable(title,artist){const seen=new Set(),out=[];for(const s of[title
 const chain=[];
 let forbiddenStem=null, selected=null, spotifyUser=null;
 let sdkPlayer=null, sdkDeviceId=null, sdkReady=false, sdkPlaying=false, sdkCurrentUri=null;
-// playerVisible removed — the bar is persistent while sdkReady is true.
 let posReported=0, posReportedAt=0, posDuration=0;
 let posTicker=null, userDraggingSeek=false;
 let shuffleOn=false, repeatOn=false, advancing=false;
@@ -456,7 +445,6 @@ const titleEl=$("title"),artistEl=$("artist"),descEl=$("desc");
 const audio=$("audio");
 const esc=s=>String(s).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]));
 
-// ---- Spotify session ----
 async function loadSpotifyUser(){
   try{ const r=await fetch('/api/spotify-me'); spotifyUser=await r.json(); }
   catch(e){ spotifyUser={loggedIn:false}; }
@@ -488,7 +476,6 @@ function renderSpotifyBar(){
   updateSaveButton();
 }
 
-// ---- SDK ----
 function initWebPlaybackSDK(){
   if(!spotifyUser?.loggedIn || spotifyUser.product!=='premium') return;
   if(sdkPlayer) return;
@@ -503,8 +490,6 @@ function initWebPlaybackSDK(){
     sdkPlayer.addListener('ready',({device_id})=>{
       sdkDeviceId=device_id; sdkReady=true;
       renderChain(); renderPlayer();
-      // If a chain already exists when the SDK finally connects, auto-play
-      // the most recent song to fulfil the "autoplay when logged in" intent.
       const last=chain[chain.length-1];
       if(last?.spotify?.uri && !sdkCurrentUri) playFullTrack(last.spotify.uri);
     });
@@ -546,7 +531,6 @@ async function playFullTrack(uri){
   }catch(e){ console.error('play failed',e); }
 }
 
-// ---- Player bar ----
 function playerChainIndex(){ if(!sdkCurrentUri) return -1; return chain.findIndex(c=>c.spotify?.uri===sdkCurrentUri); }
 function currentPosition(){
   if(!sdkPlaying) return posReported;
@@ -569,7 +553,6 @@ function ensureTicker(){
 }
 function renderPlayer(){
   const bar=$("player");
-  // Persistent: bar shows any time the SDK is ready.
   if(!sdkReady){
     bar.classList.remove('show');
     document.body.classList.remove('has-player');
@@ -583,7 +566,6 @@ function renderPlayer(){
   const artWrap=$("pl-art-wrap");
 
   if(track){
-    // Actively-loaded track — show its metadata.
     $("pl-title").textContent=track.title||'Playing…';
     $("pl-artist").textContent=track.artist||'';
     const art=track.spotify?.albumArt;
@@ -595,7 +577,6 @@ function renderPlayer(){
     $("pl-nowplaying").classList.add('show');
     $("pl-close").disabled=false;
   } else {
-    // Empty / "Ready to play" state.
     $("pl-title").textContent='Ready to play';
     $("pl-artist").textContent=chain.length?'Tap Play full on any song':'Name a song to begin';
     artWrap.innerHTML='<svg><use href="#i-note-alt"/></svg>';
@@ -640,10 +621,8 @@ async function handleTrackEnded(){
   } finally { setTimeout(()=>{advancing=false;},400); }
 }
 
-// wire player bar controls
 $("pl-play").onclick=async()=>{
   if(!sdkPlayer) return;
-  // If nothing is loaded but chain has playable tracks, kick off the last one.
   if(!sdkCurrentUri){
     const last=chain[chain.length-1];
     if(last?.spotify?.uri) playFullTrack(last.spotify.uri);
@@ -655,7 +634,6 @@ $("pl-prev").onclick=()=>{ const u=pickAdjacent(-1); if(u) playFullTrack(u); };
 $("pl-next").onclick=()=>{ const u=pickAdjacent(1); if(u) playFullTrack(u); };
 $("pl-shuffle").onclick=()=>{ shuffleOn=!shuffleOn; renderPlayer(); };
 $("pl-repeat").onclick=()=>{ repeatOn=!repeatOn; renderPlayer(); };
-// X: pause + clear the current track (bar stays visible in "Ready to play" state).
 $("pl-close").onclick=async()=>{
   if(sdkPlayer){ try{ await sdkPlayer.pause(); }catch(e){} }
   sdkCurrentUri=null; sdkPlaying=false;
@@ -690,7 +668,6 @@ vol.addEventListener('input',()=>{
 });
 vol.style.setProperty('--vpct','60%');
 
-// ---- chain views ----
 function renderChain(){
   const hist=$("history");
   if(!chain.length){
@@ -758,9 +735,6 @@ audio.addEventListener('ended',()=>{
   const pb=$("playbtn"); if(pb) pb.innerHTML='<svg><use href="#i-play"/></svg>Preview';
 });
 
-// Auto-play priority:
-//   1. Premium + SDK ready → play the full track (jukebox mode)
-//   2. Otherwise → 30-second preview via <audio>
 function autoPlayLatest(){
   const last=chain[chain.length-1];
   if(!last?.spotify) return;
@@ -775,18 +749,38 @@ function autoPlayLatest(){
   }).catch(()=>{});
 }
 
+// The word picker shows EVERY linkable word from the previous song and
+// crosses out ones the player can't use: either forbidden (used to link
+// into this song) or not present in the song the player is naming right
+// now. If a previously-picked word becomes ineligible mid-edit, unselect
+// it so the submit button reflects reality.
 function refreshWords(){
   const isOpening=chain.length===0;
   $("linkField").style.display=isOpening?'none':'flex';
   $("turn").textContent=isOpening?'Opening move':`Player ${(chain.length%4)+1}'s turn`;
   $("goText").textContent=isOpening?'Start the chain':'Name this song';
   if(isOpening){validate();return;}
-  const words=linkable(titleEl.value,artistEl.value);
-  $("words").innerHTML=words.length?words.map(w=>{
-    const dead=forbiddenStem&&w.stem===forbiddenStem;
+
+  const last=chain[chain.length-1];
+  const prevWords=linkable(last.title,last.artist);
+  const userTyped=!!(titleEl.value.trim() || artistEl.value.trim());
+  const nextStems=new Set(linkable(titleEl.value,artistEl.value).map(w=>w.stem));
+
+  if(selected && (
+       selected.stem===forbiddenStem ||
+       (userTyped && !nextStems.has(selected.stem))
+     )){
+    selected=null;
+  }
+
+  $("words").innerHTML=prevWords.map(w=>{
+    const forbidden=w.stem===forbiddenStem;
+    const notInNew=userTyped && !nextStems.has(w.stem);
+    const dead=forbidden||notInNew;
     const sel=selected&&selected.stem===w.stem;
-    return `<span class="w ${dead?'dead':''} ${sel?'sel':''}" data-s="${w.stem}" data-d="${esc(w.display)}">${esc(w.display)}</span>`;
-  }).join(''):'<span class="hint">Type your title &amp; artist to see linkable words.</span>';
+    const t=forbidden?'used to link into this song':(notInNew?'not in your song':'');
+    return `<span class="w ${dead?'dead':''} ${sel?'sel':''}" data-s="${w.stem}" data-d="${esc(w.display)}"${t?` title="${t}"`:''}>${esc(w.display)}</span>`;
+  }).join('');
   validate();
 }
 $("words").addEventListener("click",e=>{
@@ -800,9 +794,9 @@ function validate(){
   $("go").disabled=!ok;
 }
 function showMsg(t,kind){const m=$("msg");m.textContent=t;m.className="msg "+kind;}
-function clearMsg(){$("msg").className="msg";$("ovrbar").className="ovrbar";}
+function clearMsg(){$("msg").className="msg";}
 
-async function submit(allowOverride){
+async function submit(){
   $("go").disabled=true;clearMsg();
   const isOpening=chain.length===0;
   const prev=isOpening?null:chain[chain.length-1];
@@ -810,7 +804,7 @@ async function submit(allowOverride){
     prev:prev?{title:prev.title,artist:prev.artist}:null,
     next:{title:titleEl.value.trim(),artist:artistEl.value.trim()},
     linkWord:isOpening?'_':selected.display,
-    forbiddenStem,allowOverride:!!allowOverride
+    forbiddenStem
   };
   let data;
   try{
@@ -823,11 +817,10 @@ async function submit(allowOverride){
       LINK_NOT_IN_PREVIOUS:"That word isn't in the previous song.",
       LINK_REUSES_FORBIDDEN_WORD:"Can't reuse the word that linked into the last song.",
       LINK_NOT_IN_NEW_SONG:"That word isn't in the song you named.",
-      SONG_NOT_FOUND:"Couldn't verify that song exists.",
-      VERIFY_UNAVAILABLE:"Couldn't reach the music database."
+      SONG_NOT_FOUND:"Couldn't verify that song exists — check spelling or try a different song.",
+      VERIFY_UNAVAILABLE:"Couldn't reach the music database — try again."
     };
     showMsg(reasons[data.reason]||'Move rejected.','err');
-    if(data.needsOverride){ $("ovrbar").className="ovrbar show"; }
     validate();return;
   }
 
@@ -842,13 +835,11 @@ async function submit(allowOverride){
   selected=null;titleEl.value='';artistEl.value='';descEl.value='';
   renderChain();refreshWords();updateSaveButton();renderPlayer();
   autoPlayLatest();
-  showMsg(data.override?'Accepted by table call.':'Linked! Pass the phone.','ok');
+  showMsg('Linked! Pass the phone.','ok');
   setTimeout(clearMsg,1800);
 }
 
-$("go").addEventListener("click",()=>submit(false));
-$("ovrYes").addEventListener("click",()=>{$("ovrbar").className="ovrbar";submit(true);});
-$("ovrNo").addEventListener("click",()=>{clearMsg();validate();});
+$("go").addEventListener("click",submit);
 
 function updateSaveButton(){
   const btn=$("save");
