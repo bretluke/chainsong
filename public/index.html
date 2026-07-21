@@ -63,9 +63,6 @@
   .history{display:flex;gap:6px;overflow-x:auto;height:var(--history-h);
     align-items:center;scrollbar-width:none;padding:2px 0}
   .history::-webkit-scrollbar{display:none}
-  /* Cards are clickable when the SDK is up (Premium). The pointer cue is
-     always on because the hero card also affords hover feedback; if you're
-     not Premium the click just no-ops. */
   .hcard{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:9px;
     padding:6px 9px;min-width:130px;max-width:180px;display:flex;gap:7px;align-items:center;height:44px;
     cursor:pointer;transition:background .15s, border-color .15s}
@@ -423,9 +420,13 @@
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
 
 <script>
-// ---- word logic mirrored from server ----
+// ---- word logic — MUST stay in sync with lib/wordlink.js on the server ----
 const STOP=new Set(["a","an","the","i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
-function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/\b([a-z](?:\.[a-z])+)\.?/g,m=>m.replace(/\./g,"")).replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
+// Apostrophes are stripped by explicit Unicode escapes: MusicBrainz stores
+// titles like "Ain't It Fun" with the curly U+2019 apostrophe, not the ASCII
+// one, so a naive regex misses it and the character gets treated as
+// punctuation instead, splitting "Ain't" into "ain" and "t".
+function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\u0027\u2018\u2019\u02BC]/g,"").replace(/\b([a-z](?:\.[a-z])+)\.?/g,m=>m.replace(/\./g,"")).replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
 const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
 function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
  if(w.endsWith("ies")&&w.length>4)return w.slice(0,-3)+"y";
@@ -500,9 +501,6 @@ function initWebPlaybackSDK(){
     sdkPlayer.addListener('ready',({device_id})=>{
       sdkDeviceId=device_id; sdkReady=true;
       renderChain(); renderPlayer();
-      // If a chain already exists when the SDK finally connects, kick off
-      // the most recent song. Nothing was playing yet, so it's not an
-      // interruption — it's the initial start.
       const last=chain[chain.length-1];
       if(last?.spotify?.uri && !sdkCurrentUri) playFullTrack(last.spotify.uri);
     });
@@ -681,8 +679,6 @@ vol.addEventListener('input',()=>{
 });
 vol.style.setProperty('--vpct','60%');
 
-// Clicking any history card jumps playback to that song immediately.
-// Delegated so it works for cards added by later re-renders.
 $("history").addEventListener('click', e=>{
   const card=e.target.closest('.hcard');
   if(!card) return;
@@ -763,10 +759,6 @@ audio.addEventListener('ended',()=>{
   const pb=$("playbtn"); if(pb) pb.innerHTML='<svg><use href="#i-play"/></svg>Preview';
 });
 
-// When a song is added, only auto-play if nothing is already playing.
-// Otherwise the new song joins the queue at the end of the chain and
-// the user reaches it either by natural next-in-chain advance when the
-// current track ends, by hitting Next, or by clicking the card.
 function autoPlayLatest(){
   const last=chain[chain.length-1];
   if(!last?.spotify) return;
@@ -774,7 +766,6 @@ function autoPlayLatest(){
     if(!sdkCurrentUri) playFullTrack(last.spotify.uri);
     return;
   }
-  // preview fallback (non-Premium): also respects the "don't interrupt" rule
   if(!last.spotify.previewUrl || !audio.paused) return;
   audio.src=last.spotify.previewUrl;
   audio.play().then(()=>{
@@ -852,8 +843,6 @@ async function submit(){
     validate();return;
   }
 
-  // Snapshot playback state BEFORE adding so we can decide whether the
-  // new song plays or queues, and whether to tell the user "queued".
   const wasPlayingSDK   = sdkReady && sdkPlaying;
   const wasPlayingAudio = !audio.paused && audio.src;
 
