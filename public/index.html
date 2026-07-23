@@ -136,6 +136,9 @@
   .w.sel{background:var(--lime);color:#101010;border-color:var(--lime);font-weight:700}
   .w.dead{opacity:.28;cursor:not-allowed;text-decoration:line-through}
   .w.dead:hover{border-color:var(--line-2)}
+  /* Fallback words (pronouns) shown when primary options are dead — slightly
+     dimmer border so they read as "opened up because you were stuck". */
+  .w.fallback{border-style:dashed}
 
   button.go{width:100%;margin-top:10px;background:transparent;color:var(--dimmer);
     border:1px solid var(--line-2);
@@ -421,11 +424,13 @@
 
 <script>
 // ---- word logic — MUST stay in sync with lib/wordlink.js on the server ----
-const STOP=new Set(["a","an","the","i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
-// Apostrophes are stripped by explicit Unicode escapes: MusicBrainz stores
-// titles like "Ain't It Fun" with the curly U+2019 apostrophe, not the ASCII
-// one, so a naive regex misses it and the character gets treated as
-// punctuation instead, splitting "Ain't" into "ain" and "t".
+// HARD stop words: never valid link words. SOFT stop words (pronouns) are
+// normally filtered but the picker promotes them to fallback options when
+// the primary set has no viable moves — this unblocks pronoun-heavy titles
+// like "Me, Myself and I" or "You and I" that would otherwise dead-end.
+const HARD=new Set(["a","an","the","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
+const SOFT=new Set(["i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs"]);
+const STOP=new Set([...HARD,...SOFT]);
 function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\u0027\u2018\u2019\u02BC]/g,"").replace(/\b([a-z](?:\.[a-z])+)\.?/g,m=>m.replace(/\./g,"")).replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
 const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
 function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
@@ -441,7 +446,9 @@ function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
  if(w.endsWith("ly")&&w.length>4)return w.slice(0,-2);
  if(w.endsWith("s")&&!/(ss|us|is|os|as)$/.test(w)&&w.length>3)return w.slice(0,-1);
  return w;}
-function linkable(title,artist){const seen=new Set(),out=[];for(const s of[title,artist])for(const tk of rawTokens(s)){if(STOP.has(tk)||tk.length<2)continue;const st=stem(tk);if(STOP.has(st)||seen.has(st))continue;seen.add(st);out.push({display:tk,stem:st});}return out;}
+function _extract(title,artist,stopSet){const seen=new Set(),out=[];for(const s of[title,artist])for(const tk of rawTokens(s)){if(stopSet.has(tk)||tk.length<2)continue;const st=stem(tk);if(stopSet.has(st)||seen.has(st))continue;seen.add(st);out.push({display:tk,stem:st});}return out;}
+function linkable(title,artist){return _extract(title,artist,STOP);}
+function linkableFallback(title,artist){return _extract(title,artist,HARD);}
 
 // ---- state ----
 const chain=[];
@@ -722,7 +729,9 @@ function renderChain(){
   const last=chain[chain.length-1];
   let forbidDisplay=null;
   if(forbiddenStem){
-    const w=linkable(last.title,last.artist).find(x=>x.stem===forbiddenStem);
+    // Use fallback set — the forbidden word may be a pronoun promoted from
+    // an earlier fallback move, so look through everything.
+    const w=linkableFallback(last.title,last.artist).find(x=>x.stem===forbiddenStem);
     forbidDisplay=w?w.display:null;
   }
   const art=last.spotify?.albumArt?`<img src="${esc(last.spotify.albumArt)}" alt="">`:'';
@@ -773,6 +782,13 @@ function autoPlayLatest(){
   }).catch(()=>{});
 }
 
+// Compute link-word options with a fallback tier for dead-ends.
+//
+// Primary set = words filtered by both HARD and SOFT (no pronouns).
+// If every primary word would be dead (forbidden or absent from the song
+// the player is currently naming), we ALSO show the pronouns from the
+// fallback set so the game isn't soft-locked. Fallback words render with
+// a dashed border so they read as "opened up because you were stuck".
 function refreshWords(){
   const isOpening=chain.length===0;
   $("linkField").style.display=isOpening?'none':'flex';
@@ -781,24 +797,48 @@ function refreshWords(){
   if(isOpening){validate();return;}
 
   const last=chain[chain.length-1];
-  const prevWords=linkable(last.title,last.artist);
+  const primary=linkable(last.title,last.artist);
   const userTyped=!!(titleEl.value.trim() || artistEl.value.trim());
-  const nextStems=new Set(linkable(titleEl.value,artistEl.value).map(w=>w.stem));
+  // Use fallback set for the "in new song" check so pronouns in the new
+  // song count as matches when we're in fallback mode.
+  const nextStems=new Set(linkableFallback(titleEl.value,artistEl.value).map(w=>w.stem));
 
-  if(selected && (
-       selected.stem===forbiddenStem ||
-       (userTyped && !nextStems.has(selected.stem))
-     )){
+  // A word is "viable" if the player could actually pick it right now.
+  const isViable=w=>{
+    if(w.stem===forbiddenStem) return false;
+    if(userTyped && !nextStems.has(w.stem)) return false;
+    return true;
+  };
+
+  // Decide whether to expand to fallback tier.
+  const primaryViable=primary.some(isViable);
+  let words=primary;
+  const fallbackStems=new Set();
+  if(!primaryViable){
+    const primaryStems=new Set(primary.map(w=>w.stem));
+    const extras=linkableFallback(last.title,last.artist)
+                   .filter(w=>!primaryStems.has(w.stem));
+    for(const w of extras) fallbackStems.add(w.stem);
+    words=[...primary,...extras];
+  }
+
+  // If the currently-selected word is no longer viable, unselect silently.
+  if(selected && !words.some(w=>w.stem===selected.stem && isViable(w))){
     selected=null;
   }
 
-  $("words").innerHTML=prevWords.map(w=>{
+  $("words").innerHTML=words.map(w=>{
     const forbidden=w.stem===forbiddenStem;
     const notInNew=userTyped && !nextStems.has(w.stem);
     const dead=forbidden||notInNew;
     const sel=selected&&selected.stem===w.stem;
-    const t=forbidden?'used to link into this song':(notInNew?'not in your song':'');
-    return `<span class="w ${dead?'dead':''} ${sel?'sel':''}" data-s="${w.stem}" data-d="${esc(w.display)}"${t?` title="${t}"`:''}>${esc(w.display)}</span>`;
+    const isFallback=fallbackStems.has(w.stem);
+    const t=forbidden?'used to link into this song':(notInNew?'not in your song':(isFallback?'fallback — normally filtered':''));
+    const cls=['w'];
+    if(dead) cls.push('dead');
+    if(sel) cls.push('sel');
+    if(isFallback) cls.push('fallback');
+    return `<span class="${cls.join(' ')}" data-s="${w.stem}" data-d="${esc(w.display)}"${t?` title="${t}"`:''}>${esc(w.display)}</span>`;
   }).join('');
   validate();
 }
