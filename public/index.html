@@ -422,14 +422,14 @@
 
 <script>
 // ---- word logic — MUST stay in sync with lib/wordlink.js on the server ----
-const HARD=new Set(["a","an","the","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","up","out","off","over","into","onto","down","no","not","do","does","did","n"]);
+// HARD = pure prepositions/copulas/conjunctions/articles/subordinators/negations.
+// Note: up/down/out/off/over/into/onto are intentionally NOT here — they carry
+// meaning in song titles (Level Up, Get Down, Off the Wall, Into You).
+const HARD=new Set(["a","an","the","of","to","in","on","at","by","for","with","from","as","is","be","am","are","was","were","been","and","or","but","nor","so","yet","if","then","than","that","this","these","those","no","not","do","does","did","n"]);
 const SOFT=new Set(["i","me","my","mine","myself","you","your","yours","u","he","him","his","she","her","hers","it","its","we","us","our","ours","they","them","their","theirs"]);
 const STOP=new Set([...HARD,...SOFT]);
 function rawTokens(t){if(!t)return[];return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\u0027\u2018\u2019\u02BC]/g,"").replace(/\b([a-z](?:\.[a-z])+)\.?/g,m=>m.replace(/\./g,"")).replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(Boolean);}
 const IRR={children:"child",men:"man",women:"woman",people:"person",feet:"foot",teeth:"tooth",ran:"run",running:"run",runs:"run",loved:"love",loving:"love",loves:"love",rushed:"rush",rushing:"rush",rushes:"rush",always:"always",perhaps:"perhaps",across:"across"};
-// Contracted -in' (surfin', rockin', livin') stems the same way as full -ing.
-// Apostrophes are already stripped by rawTokens; length > 4 keeps the rule
-// conservative so short unrelated words like cabin/robin/satin aren't mangled.
 function stem(w){if(IRR[w])return IRR[w];if(w.length<=3)return w;
  if(w.endsWith("ies")&&w.length>4)return w.slice(0,-3)+"y";
  if(w.endsWith("ied")&&w.length>4)return w.slice(0,-3)+"y";
